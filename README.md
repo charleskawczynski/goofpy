@@ -1,7 +1,7 @@
 goofpy
 ======
 
-GoofPy is a Generator of Object-Oriented Fortran code via Python.
+GoofPy is a Generator of Object-Oriented Fortran code via Python. The userInput.py file is a sample.
 
     """
             goofPy (Generator of Object Oriented Fortran via Python)
