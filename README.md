@@ -4,14 +4,18 @@ goofpy
 GoofPy is a Generator of Object-Oriented Fortran code via Python. The userInput.py file is a sample.
 
         goofPy (Generator of Object Oriented Fortran via Python)
+
 -------------------------------- ABOUT ------------------------------------
+
 This code generates functions to
  - set, setAll
  - get, getAll
  - print, printAll
  - writeToFile, writeToFileAll
 for all properties.
+
 ------------------------------ HOW TO USE ---------------------------------
+
 - Run this file with the following folder structure:
     /PROJECT_NAME
         userInput.py
@@ -19,7 +23,9 @@ for all properties.
         /calc/
         /helper/
   then check the 'class', 'helper' and 'calc' folders
+
 ------------------------------- OPTIONS -----------------------------------
+
 - The Fortran class name is specified by the Python function name.
 
 - Three types of properties may be chosen:
