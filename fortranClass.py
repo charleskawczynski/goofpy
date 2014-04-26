@@ -119,6 +119,9 @@ class fortranClass:
     def writeUseModule(self): 
         dependentNames = OrderedDict()
         c = []
+
+        c.append(self.baseSpaces + 'use allClassFuncs_mod')
+
         for i in range(len(self.usedModules)): 
             if not self.usedModules[i] == '':     
                 c.append( self.baseSpaces + 'use ' + self.usedModules[i])
@@ -291,6 +294,12 @@ class fortranClass:
 
         c.append(self.printAll())
         c.append('')
+
+        c.append(self.makeWriteFunction())
+
+        c.append(self.makeWriteAll())
+        c.append('')
+
         c.append(self.writeHelperFunction())
         c.append('')
         return c
@@ -729,9 +738,9 @@ class fortranClass:
         #  *******ONE OF TYPES**************'"
         for (name, object_) in self.prop.iteritems():
             if object_.getObjectType().lower() == 'Parameter'.lower():
-                func = 'writeCallTo' + 'Primitive'
+                func = 'writeCallPrint' + 'Primitive'
             else:
-                func = 'writeCallTo' + object_.getObjectType()
+                func = 'writeCallPrint' + object_.getObjectType()
             c.append(getattr(self, func)(object_))
         
         c.append(self.baseSpaces + self.spaces[2] + "write(*,*) '" + self.stars[15] + "'")
@@ -740,11 +749,11 @@ class fortranClass:
         return c
     
     
-    def writeCallToObject(self,object_): 
+    def writeCallPrintObject(self,object_): 
         return self.baseSpaces + self.spaces[2] + "call print" +  object_.getClass().capitalize() + "(this%" + object_.getName() + ")"
     
     
-    def writeCallToPointer(self,object_): 
+    def writeCallPrintPointer(self,object_): 
         c = []
         c.append(self.baseSpaces + self.spaces[2] + "if (associated(this%ptr_" + object_.getName() + ")) then")
         c.append(self.baseSpaces + self.spaces[4] + "call print" +  object_.getClass().capitalize() + "(this%ptr_" + object_.getName() + ")")
@@ -752,7 +761,7 @@ class fortranClass:
         return c
     
     
-    def writeCallToPrimitive(self,object_): 
+    def writeCallPrintPrimitive(self,object_): 
         return self.baseSpaces + self.spaces[2] + "call print" + self.getName().capitalize() + object_.getName().capitalize() + "(this)"
     
 
@@ -767,6 +776,143 @@ class fortranClass:
     def initializePrimitive(self,object_): 
         return self.baseSpaces + self.spaces[2] + object_.getClass() +  " :: " + object_.getName()
     
+
+    ### WRITE TO FILE ####################################################################*/
+    def makeWriteFunction(self): 
+        c = []
+        for (name, object_) in self.prop.iteritems():
+            if (object_.getPrint()): 
+                if object_.getObjectType().lower() == 'Parameter'.lower():
+                    func = 'makeWrite' + 'Primitive' + 'Function'
+                else:
+                    func = 'makeWrite' + object_.getObjectType() + 'Function'
+                c.append(getattr(self, func)(name))
+                c.append('')
+        return c
+    
+
+    def makeWriteObjectFunction(self,name): 
+        sig = 'write' + self.name.capitalize() + name.capitalize()
+        totalSig = self.baseSpaces + self.fullSubroutineSignature(sig,'this,dir')
+        c = []
+        c.append(self.breakLine(totalSig,[]))
+        c.append(self.funcImplicitNone())
+        c.append(self.initializeThis('in'))
+        c.append(self.baseSpaces + self.spaces[2] + 'character(len=*),intent(in) :: dir')
+        c.append(self.baseSpaces + self.spaces[2] + 'type(' + self.prop[name].getClass() + ') :: ' + name)
+        c.append(self.baseSpaces + self.spaces[2] + 'call write' + self.prop[name].getClass().capitalize() + '(this%' + name + ',dir)')
+        c.append(self.baseSpaces + self.endSubroutine() )
+        return c
+    
+
+    def makeWritePointerFunction(self,name): 
+        sig = 'write' + self.name.capitalize() + name.capitalize()
+        totalSig = self.baseSpaces + self.fullSubroutineSignature(sig,'this,dir')
+
+        c = []
+        c.append(self.breakLine(totalSig,[]))
+        c.append(self.funcImplicitNone())
+        c.append(self.initializeThis('in'))
+        c.append(self.baseSpaces + self.spaces[2] + 'character(len=*),intent(in) :: dir')
+        c.append(self.baseSpaces + self.spaces[2] + 'call write' + self.prop[name].getClass().capitalize() + '(this%ptr_' + name + ',dir)')
+        c.append(self.baseSpaces + self.endSubroutine() )
+        return c
+    
+
+    def makeWritePrimitiveFunction(self,name): 
+        sig = 'write' + self.name.capitalize() + name.capitalize()
+        totalSig = self.baseSpaces + self.fullSubroutineSignature(sig,'this,dir,parentUnit')
+
+        c = []
+        c.append(totalSig)
+        c.append(self.funcImplicitNone())
+        c.append(self.initializeThis('in'))
+        c.append(self.baseSpaces + self.spaces[2] + self.prop[name].getClass() +  ' :: ' + name)
+        c.append(self.baseSpaces + self.spaces[2] + 'character(len=*),intent(in) :: dir')
+        c.append(self.baseSpaces + self.spaces[2] + 'integer,optional :: parentUnit')
+        c.append(self.baseSpaces + self.spaces[2] + 'integer :: NewU')
+
+        c.append(self.baseSpaces + self.spaces[2] + 'if (present(parentUnit)) then')
+        c.append(self.baseSpaces + self.spaces[4] + 'NewU = parentUnit')
+        c.append(self.baseSpaces + self.spaces[4] + 'write(NewU,*) "' + name + ': ", this%' + name)
+        c.append(self.baseSpaces + self.spaces[2] + 'else')
+        c.append(self.baseSpaces + self.spaces[4] + 'call newAndOpen(dir,"' + name + '")')
+        c.append(self.baseSpaces + self.spaces[4] + 'write(NewU,*) "' + name + ': ", this%' + name)
+        c.append(self.baseSpaces + self.spaces[4] + 'call closeAndMessage(NewU,"' + name + '")')
+        c.append(self.baseSpaces + self.spaces[2] + 'endif')
+
+        c.append(self.baseSpaces + self.endSubroutine() )
+        return c
+    
+
+    def makeWriteAll(self): 
+        sig = 'write' + self.name.capitalize()
+        totalSig = self.baseSpaces + self.fullSubroutineSignature(sig,'this,dir,parentUnit')
+        c = []
+        c.append(self.breakLine(totalSig,[]))
+        c.append(self.baseSpaces + self.spaces[2] + 'implicit none')
+        c.append(self.baseSpaces + self.spaces[2] + 'type(' + self.name + '), intent(in) :: this' )
+        c.append(self.baseSpaces + self.spaces[2] + 'character(len=*),intent(in) :: dir')
+
+        c.append(self.baseSpaces + self.spaces[2] + 'integer,optional :: parentUnit')
+        c.append(self.baseSpaces + self.spaces[2] + 'integer :: NewU')
+        c.append(self.baseSpaces + self.spaces[2] + 'if (present(parentUnit)) then')
+        c.append(self.baseSpaces + self.spaces[4] + 'NewU = parentUnit')
+        c.append(self.baseSpaces + self.spaces[2] + 'else')
+        c.append(self.baseSpaces + self.spaces[4] + 'NewU = newUnit()')
+        c.append(self.baseSpaces + self.spaces[4] + 'open(NewU,file=trim(dir) //"' + self.name.capitalize() + '.txt")')
+        c.append(self.baseSpaces + self.spaces[2] + 'endif')
+
+        # add an "avoid this line" if no properties exist to be printed
+        #  *******ONE OF TYPES**************'"
+        for (name, object_) in self.prop.iteritems():
+            if object_.getObjectType().lower() == 'Parameter'.lower():
+                func = 'makeCallToWrite' + 'Primitive'
+            else:
+                func = 'makeCallToWrite' + object_.getObjectType()
+            c.append(getattr(self, func)(object_))
+
+        c.append(self.baseSpaces + self.spaces[2] + 'if (.not. present(parentUnit)) then')
+        c.append(self.baseSpaces + self.spaces[4] + 'close(NewU)')
+        c.append(self.baseSpaces + self.spaces[4] + "write(*,*) '+++ Data for " + self.name + " written to file +++'")
+        c.append(self.baseSpaces + self.spaces[2] + 'endif')
+        
+        c.append(self.baseSpaces + self.endSubroutine() )
+        return c
+    
+    
+    def makeCallToWriteObject(self,object_): 
+        return self.baseSpaces + self.spaces[2] + "call write" +  object_.getClass().capitalize() + "(this%" + object_.getName() + ",dir,NewU)"
+    
+    
+    def makeCallToWritePointer(self,object_): 
+        c = []
+        c.append(self.baseSpaces + self.spaces[2] + "if (associated(this%ptr_" + object_.getName() + ")) then")
+        c.append(self.baseSpaces + self.spaces[4] + "call write" +  object_.getClass().capitalize() + "(this%ptr_" + object_.getName() + ",dir,NewU)")
+        c.append(self.baseSpaces + self.spaces[2] + "endif")
+        return c
+    
+    
+    def makeCallToWritePrimitive(self,object_): 
+        return self.baseSpaces + self.spaces[2] + "call write" + self.getName().capitalize() + object_.getName().capitalize() + "(this,dir,NewU)"
+    
+    def conditionalWrite(self): 
+        totalSig = self.baseSpaces + 'subroutine conditionalWrite' + self.name.capitalize() + '(u,var)'
+
+        c = []
+        c.append(totalSig)
+        c.append(self.funcImplicitNone())
+        c.append(self.baseSpaces + self.spaces[2] + 'if (present(parentUnit)) then')
+        c.append(self.baseSpaces + self.spaces[4] + 'NewU = parentUnit')
+        c.append(self.baseSpaces + self.spaces[4] + 'write(NewU,*) "' + name + ': ", this%' + name)
+        c.append(self.baseSpaces + self.spaces[2] + 'else')
+        c.append(self.baseSpaces + self.spaces[4] + 'call newAndOpen(dir,"' + name + '"")')
+        c.append(self.baseSpaces + self.spaces[4] + 'write(NewU,*) "' + name + ': ", this%' + name)
+        c.append(self.baseSpaces + self.spaces[4] + 'call closeAndMessage(NewU,"' + name + '"")')
+        c.append(self.baseSpaces + self.spaces[2] + 'endif')
+        c.append(self.baseSpaces + self.endFunction() )
+        return c
+
 
     ###INCLUDE HELPER####################################################################*/
     # Is this needed for each poperty of a given class? or just the whole class?
@@ -800,3 +946,4 @@ class fortranClass:
     
     
     
+
