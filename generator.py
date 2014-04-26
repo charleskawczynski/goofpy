@@ -39,6 +39,12 @@ sys.path.append(basePath)
 
 N_calc = 0
 N_class = 0
+
+# AllClassFuncs_mod
+fname = 'allClassFuncs_mod'
+l = func.getContentsByFullPath(generatorPath + '/' + fname + '.f')
+func.writeListToFile(basePath + '/classes/',fname,'.f',l)
+
 for f in classList[1:]:
     fun = 'userIn' + '.' + f + '()'
     fclass,props = eval(fun)
@@ -81,6 +87,7 @@ print 'Number of lines generated (Calc files): ' + str(N_calc)
 print 'Number of lines generated (Total): ' + str(N_tot)
 print ''
 print 'Code generation complete.'
+
 
 
 
