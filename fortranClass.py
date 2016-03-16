@@ -5,9 +5,12 @@ from collections import OrderedDict
 # DOUBLE CHECK WHEREVER CALL SET FUNCTIONS ARE USED THAT THE ISSET(SETSET) OR SETSET == True
 # AND DO THE SAME WITH PRINT FUNCTIONS SO THAT THESE CAN BE TURNED OFF IF DESIRED+
 
+<<<<<<< HEAD
 # See if an interface can be used so that the class name is not required in the set/get/print/write
 # functions. This will greatly simplify the interface.
 
+=======
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
 class fortranClass: 
     nFiles = 0 # number of input files
 
@@ -278,7 +281,11 @@ class fortranClass:
     
 
     def closeClassDefinition(self): 
+<<<<<<< HEAD
         return self.baseSpaces + 'endtype'
+=======
+        return self.baseSpaces + 'endtype'+self.baseSpaces
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
     
 
     ###WRITE ALL FUNCTIONS############################################################*/
@@ -759,7 +766,11 @@ class fortranClass:
     def writeCallPrintPointer(self,object_): 
         c = []
         c.append(self.baseSpaces + self.spaces[2] + "if (associated(this%ptr_" + object_.getName() + ")) then")
+<<<<<<< HEAD
         c.append(self.baseSpaces + self.spaces[4] + "call print" +  object_.getClass().capitalize() + object_.getName() + "(this%ptr_" + object_.getName() + ")")
+=======
+        c.append(self.baseSpaces + self.spaces[4] + "call print" +  object_.getClass().capitalize() + "(this%ptr_" + object_.getName() + ")")
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
         c.append(self.baseSpaces + self.spaces[2] + "endif")
         return c
     

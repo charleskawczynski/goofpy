@@ -115,11 +115,18 @@ def makeDotBat(path):
     return
     
 def getFileList(path):
+<<<<<<< HEAD
     fext = '.f90'
     FL = []
     for f in os.listdir(path):
         if f.endswith(fext):
             FL.append(f[:-len(fext)])
+=======
+    FL = []
+    for f in os.listdir(path):
+        if f.endswith(".f"):
+            FL.append(f[:-2])
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
     return FL
     
 def isPastFirstLineOfScopingUnit(s):
@@ -140,7 +147,10 @@ def isPastUseStatements(s):
     return any(TF)
     
 def getFuncNames(path,FL):
+<<<<<<< HEAD
     fext = '.f90'
+=======
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
     r1 = re.compile(r'(?<=program\s)[A-Za-z_0-9]+')
     r2 = re.compile(r'(?<=module\s)[A-Za-z_0-9]+')
     r3 = re.compile(r'(?<=function\s)[A-Za-z_0-9]+')
@@ -148,7 +158,11 @@ def getFuncNames(path,FL):
     FN = []
     d = OrderedDict()
     for f in FL:
+<<<<<<< HEAD
         s = getContentsByFullPath(path + f + fext)
+=======
+        s = getContentsByFullPath(path + f + '.f')
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
         d[f] = []
         for k in s:
             if not k.startswith('!'):
@@ -168,10 +182,16 @@ def getFuncNames(path,FL):
     return FN
 
 def getProgFiles(path,FL):
+<<<<<<< HEAD
     fext = '.f90'
     progFiles = []
     for f in FL:
         s = getContentsByFullPath(path + f + fext)
+=======
+    progFiles = []
+    for f in FL:
+        s = getContentsByFullPath(path + f + '.f')
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
         for k in s:
             if not k.startswith('!'):
                 if k.lower().rstrip().lstrip().startswith('program'):
@@ -179,12 +199,19 @@ def getProgFiles(path,FL):
     return progFiles
 
 def sortFileList(path,t,FL,FN):
+<<<<<<< HEAD
     fext = '.f90'
+=======
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
     d = OrderedDict()
     r = re.compile(r'(?<=use\s)[A-Za-z_0-9]+')
     SL = []
     for fl,fn in t:
+<<<<<<< HEAD
         s = getContentsByFullPath(path + fl + fext)
+=======
+        s = getContentsByFullPath(path + fl + '.f')
+>>>>>>> cc80e570353cdab2994bc065dadc0d821d478d12
         d[(fl,fn)] = []
         for k in s:
             if not k.startswith('!'):
