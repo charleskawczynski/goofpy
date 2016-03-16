@@ -1,0 +1,6 @@
+Consider adding a "setFunctionMinimizer=True" for all classes.
+This may search through all handwritten code and only write functions
+that appear to be called (twice, once by parent and additional is a user call) 
+in any files. Good for optimization once the program is complete.
+
+
