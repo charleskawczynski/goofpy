@@ -3,7 +3,6 @@ import sys
 import glob
 from collections import OrderedDict
 import re
-
 def flatten(foo):
     l = []
     for x in foo:
@@ -13,13 +12,13 @@ def flatten(foo):
         else:
             l.append(x)
     return l
-
+            
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
-
+    
 def printFilesInDir(dir_):
     tot_dir = os.getcwd() + '/' + dir_
     print '**** CWD: ' + str(os.getcwd()) + ' ****'
@@ -32,17 +31,17 @@ def writeListToFile(path,name,ext,l):
     pne = path + name + ext
     try:
         f = open(pne,'w+')
-    except IOError as e:
+    except IOError as e: 
         print '---e in writeContentsToFile---'
         printFilesInDir(path)
         print e
         print '------'
     else:
         f.write('\n'.join(l))
-
+        
 def getContentsByPath(path,name,ext):
     pne = path + name + ext
-    try:
+    try: 
         f = open(pne,'r+')
     except IOError as e:
         print '---e in setContentsByPath---'                    # remove all values from d:
@@ -57,7 +56,7 @@ def getContentsByPath(path,name,ext):
 
 def getContentsByFullPath(pne):
     path = pne.split(os.path.basename(pne))[0]
-    try:
+    try: 
         f = open(pne,'r+')
     except IOError as e:
         print '---e in setContentsByPath---'
@@ -80,7 +79,7 @@ def getClasses(path,name,ext):
             classes.append(s_new[-1].strip(' '))
     classes.pop(0)
     return classes
-
+    
 def getClassesByFullPath(pne):
     c = getContentsByFullPath(pne)
     classes = []
@@ -92,7 +91,7 @@ def getClassesByFullPath(pne):
             classes.append(s_new[-1].strip(' '))
     classes.pop(0)
     return classes
-
+    
 # MAKE BATCH FILE***********************************
 def makeDotBat(path):
     FL = getFileList(path)
@@ -114,7 +113,7 @@ def makeDotBat(path):
         FL = [' '.join(FL)]
         writeListToFile(path,progFile+'_compile','.bat',FL)
     return
-
+    
 def getFileList(path):
     fext = '.f90'
     FL = []
@@ -122,7 +121,7 @@ def getFileList(path):
         if f.endswith(fext):
             FL.append(f[:-len(fext)])
     return FL
-
+    
 def isPastFirstLineOfScopingUnit(s):
     TF = [False]*6
     TF[1] = s.lower().rstrip().lstrip().startswith('implicit none')
@@ -139,7 +138,7 @@ def isPastUseStatements(s):
     TF[3] = s.lower().rstrip().lstrip().startswith('contains')
     TF[4] = s.lower().rstrip().lstrip().startswith('call ')
     return any(TF)
-
+    
 def getFuncNames(path,FL):
     fext = '.f90'
     r1 = re.compile(r'(?<=program\s)[A-Za-z_0-9]+')
@@ -208,7 +207,7 @@ def sortFileList(path,t,FL,FN):
                 d = removekey(d,tNew)
                 # remove all values from d:
                 d = removeValues(d,fn)
-
+                
     SL = flatten(SL)
     return SL
 
@@ -223,6 +222,6 @@ def removeValues(d, val):
     for k,arr in d.iteritems():
         r[k] = [ x for x in arr if not x == val ]
     return r
-
-
-
+    
+    
+    

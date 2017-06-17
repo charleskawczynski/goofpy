@@ -1,7 +1,7 @@
       module allClassFuncs_mod
         implicit none
       contains
-
+        
        function newAndOpen(dir,name) result(NU)
         implicit none
          character(len=*),intent(in) :: dir,name

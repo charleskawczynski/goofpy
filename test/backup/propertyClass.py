@@ -1,9 +1,9 @@
 class propertyClass:
-  def __init__(self):
+  def __init__(self): 
     # Default Settings
     self.setDefault();
 
-  def setDefault(self):
+  def setDefault(self): 
     self.unsetAll();
     self.setSet(True);
     self.setGet(True);
@@ -35,7 +35,7 @@ class propertyClass:
         del (self.objectType);
     except: pass
 
-  def setALLFalse(self):
+  def setALLFalse(self): 
     self.setSet(False);
     self.setGet(False);
     self.setPrint(False);
@@ -55,14 +55,14 @@ class propertyClass:
   def setPrint(self,print_): self.print_ = print_;
   def setCalc(self,calc): self.calc = calc;
   def setHelper(self,helper): self.helper = helper;
-  def setAutoCalc(self,autoCalc):
-    self.autoCalc = autoCalc;
-    if (autoCalc):
+  def setAutoCalc(self,autoCalc): 
+    self.autoCalc = autoCalc; 
+    if (autoCalc): 
       self.setCalc(True);
 
-  def setParam(self,param):
+  def setParam(self,param): 
     self.param = param;
-    if (param):
+    if (param): 
       self.setALLFalse();
 
 
@@ -71,10 +71,10 @@ class propertyClass:
   def getValue(self): return self.value;
   def getClass(self): return self.class_;
   def getObjectType(self): return self.objectType;
-  def getDependentProps(self):
+  def getDependentProps(self): 
     try:
         return self.dependentProps
-    except:
+    except: 
         return False
 
 
@@ -91,11 +91,11 @@ class propertyClass:
     try:
         self.dependentProps
         return True
-    except:
+    except: 
         return False
 
 
   def isAutoCalcSet(self): return self.autoCalc is not None;
 
-  def checkVariables(self):
+  def checkVariables(self): 
             print 'checking variables?'

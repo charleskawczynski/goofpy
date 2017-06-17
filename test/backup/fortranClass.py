@@ -756,7 +756,7 @@ class fortranClass:
     def writeCallPrintPointer(self,object_):
         c = []
         c.append(self.baseSpaces + self.spaces[2] + "if (associated(this%ptr_" + object_.getName() + ")) then")
-        c.append(self.baseSpaces + self.spaces[4] + "call print" +  object_.getClass().capitalize() + object_.getName() + "(this%ptr_" + object_.getName() + ")")
+        c.append(self.baseSpaces + self.spaces[4] + "call print" +  object_.getClass().capitalize() + "(this%ptr_" + object_.getName() + ")")
         c.append(self.baseSpaces + self.spaces[2] + "endif")
         return c
 

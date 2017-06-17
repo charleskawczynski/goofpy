@@ -7,14 +7,9 @@ if os.name == 'posix':
 elif os.name == 'nt':
     clear = lambda: os.system('cls')
     clear()
-PS = '\\'
 targetPath = os.getcwd()
-generatorPath = targetPath+PS+'..'
 sys.path.append(targetPath)
-sys.path.append(generatorPath)
-print(targetPath)
-print(generatorPath)
-from main import userInput as UI
+from userInput import userInput as UI
 import myFuncs as func
 import inspect
 
@@ -29,12 +24,11 @@ abspath = os.path.abspath(__file__)
 generatorPath = os.path.dirname(abspath)
 os.chdir(targetPath)
 
-PS = '/'
 path = targetPath + '/../'
-name = 'main'
+name = 'userInput'
 ext = '.py'
 
-classList = func.getClassesByFullPath(targetPath + PS+name+ext)
+classList = func.getClassesByFullPath(targetPath + '/userInput.py')
 func.makeDotBat(targetPath + '/classes/')
 userIn = UI()
 fun = 'userIn' + '.' + classList[0] + '()'
@@ -63,7 +57,7 @@ for f in classList[1:]:
     fname = f + '_mod'
     func.writeListToFile(path,fname,fext,l)
     N_class += func.file_len(path+fname+fext)
-
+    
     # Fortran Calc Files
     for name, object_ in props.iteritems():
         if (object_.getCalc()):
@@ -77,7 +71,7 @@ for f in classList[1:]:
             except:
                 func.writeListToFile(path,fname,fext,l)
                 N_calc += func.file_len(path+fname+fext)
-
+    
     # Fortran Helper files
     if fclass.getHelper():
         path = basePath + '/helper/'
