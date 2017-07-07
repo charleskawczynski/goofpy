@@ -91,8 +91,8 @@ class fortran_module:
         alias = alias+['print'];   sub_name = sub_name+['print'];
         alias = alias+['export'];  sub_name = sub_name+['export'];
         alias = alias+['import'];  sub_name = sub_name+['import'];
-        alias = alias+['export'];  sub_name = sub_name+['export_wrapper'];
-        alias = alias+['import'];  sub_name = sub_name+['import_wrapper'];
+        # alias = alias+['export'];  sub_name = sub_name+['export_wrapper'];
+        # alias = alias+['import'];  sub_name = sub_name+['import_wrapper'];
         st_al = [len(x) for x in alias]
         st_sn = [len(x) for x in sub_name]
         sp_al = [self.spaces[max(st_al)-x] for x in st_al]

@@ -1,56 +1,44 @@
 goofpy
 ======
-
-GoofPy is a Generator of Object-Oriented Fortran code via Python. The userInput.py file is a sample.
-
-        goofPy (Generator of Object Oriented Fortran via Python)
-
 -------------------------------- ABOUT ------------------------------------
+GoofPy is a Generator of Object-Oriented Fortran code via Python.
+The main.py file in the test folder is a sample.
+------------------------------- main.py (example) -----------------------------------
+(header) ...
 
-This code generates functions to
- - set, setAll
- - get, getAll
- - print, printAll
- - writeToFile, writeToFileAll
-for all properties.
+module_name = 'array'
+g.add_module(module_name)
+g.module[module_name].set_used_modules(['module_needed_for_array_mod'])
+g.module[module_name].set_privacy('private')
+g.module[module_name].add_prop(FP.init_all('N','integer','private','primitive',False,0,0,'0'))
+g.module[module_name].add_prop(FP.init_all('a','real(8)','private','primitive',True,1,6,'0.0'))
+
+module_name = 'arrays'
+g.add_module(module_name)
+g.module[module_name].set_used_modules(['module_needed_for_array_mod'])
+g.module[module_name].set_privacy('private')
+g.module[module_name].add_prop(FP.init_all('N','integer','private','primitive',False,0,0,'0'))
+g.module[module_name].add_prop(FP.init_all('a','array','private','object',True,1,6,'0.0'))
+
+g.generate_code()
+---------------------------------------------------------------------------
+
+This test code generates the following subroutines:
+ - init
+ - delete
+ - display
+ - print
+ - export
+ - import
+for all of the class properties, specified in the main.py file.
 
 ------------------------------ HOW TO USE ---------------------------------
 
-- Run this file with the following folder structure:
-    /PROJECT_NAME
-        userInput.py
-        /classes/
-        /calc/
-        /helper/
-  then check the 'class', 'helper' and 'calc' folders
+  Then run python main.py in a PROJECT_NAME folder. A folder, named
+  'generated_code' and .f90 files will be generated.
 
 ------------------------------- OPTIONS -----------------------------------
 
-- The Fortran class name is specified by the Python function name.
-
-- Three types of properties may be chosen:
-    1) Object - an abstract object (for abstract data structures)
-    2) Pointer - a pointer object (for dynamic capabilities)
-    3) Primitive - any primitive type (integer, character, real etc.)
-    4) Parameter - a once-assignable primitive, often used for array sizes (integer, character, real etc.)
-
-- Values of Parameters may be set with: prop.setValue()
-
-- Modules can be added to a class specified by a list of strings with:
-f.setUsedModules(['mod1','mod2',...,'modn'])
-
-- To add functionality to a class, include a 'helper' file in 
-the 'helper' folder with: f.setHelper(True)
-Note: does not overwrite files
-
-- To specify class privacy, use: f.setPrivacy('') prublic/private
-Note: default = private
-- To specify a parameter's privacy, use: prop.setPrivacy('') prublic/private
-Note: default = private
-
-- To auto-calculate a property when an object is made, use:
-prop.setAutoCalc(True) and  
-prop.setDependentProps([props['x'],props['y']])
-to set the dependent properties of the calculated property.
-This property may then be defined in the 'calc' folder.
-Note: autocalc functionality does not overwrite files
+- Two types of data structure may be chosen:
+    1) 'primitive' - any primitive type (integer, character, real etc.)
+    2) 'object' - a derived data type (which are basically objects in fortran 90)

@@ -1,23 +1,21 @@
        module ARRAY_mod
-       use IO_tools_mod
+       use module_needed_for_array_mod
        implicit none
 
        private
        public :: init,delete,display,print,export,import
 
-       interface init;   module interface init_array;          end interface
-       interface delete; module interface delete_array;        end interface
-       interface display;module interface display_array;       end interface
-       interface print;  module interface print_array;         end interface
-       interface export; module interface export_array;        end interface
-       interface import; module interface import_array;        end interface
-       interface export; module interface export_wrapper_array;end interface
-       interface import; module interface import_wrapper_array;end interface
+       interface init;   module interface init_array;   end interface
+       interface delete; module interface delete_array; end interface
+       interface display;module interface display_array;end interface
+       interface print;  module interface print_array;  end interface
+       interface export; module interface export_array; end interface
+       interface import; module interface import_array; end interface
 
        type ARRAY
          private
-         real(cp),dimension(:),allocatable :: a
          integer :: n = 0
+         real(8),dimension(:),allocatable :: a
        end type
 
        contains
@@ -27,11 +25,11 @@
          type(array),intent(inout) :: this
          type(array),intent(in) :: that
          call delete(this)
+         this%n = that%n
          if (allocated(that%a)) then
            allocate(this%a(size(that%a)))
            this%a = that%a
          endif
-         this%n = that%n
        end subroutine
 
        subroutine init_many_ARRAY(this,that)
@@ -50,11 +48,11 @@
        subroutine delete_ARRAY(this)
          implicit none
          type(array),intent(inout) :: this
+         this%n = 0
          if (allocated(this%a)) then
-           this%a = 0.0_cp
+           this%a = 0.0
            deallocate(this%a)
          endif
-         this%n = 0
        end subroutine
 
        subroutine delete_many_ARRAY(this)
@@ -73,8 +71,8 @@
          implicit none
          type(array),intent(in) :: this
          integer,intent(in) :: un
-         write(un,*) 'a = ',this%a
          write(un,*) 'n = ',this%n
+         write(un,*) 'a = ',this%a
        end subroutine
 
        subroutine display_many_ARRAY(this,un)
@@ -105,16 +103,16 @@
          implicit none
          type(array),intent(in) :: this
          integer,intent(in) :: un
-         write(un,*) this%a
          write(un,*) this%n
+         write(un,*) this%a
        end subroutine
 
        subroutine import_ARRAY(this,un)
          implicit none
          type(array),intent(inout) :: this
          integer,intent(in) :: un
-         read(un,*) this%a
          read(un,*) this%n
+         read(un,*) this%a
        end subroutine
 
        end module
