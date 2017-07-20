@@ -6,12 +6,18 @@
        private
        public :: init,delete,display,print,export,import
 
-       interface init;   module interface init_arrays;   end interface
-       interface delete; module interface delete_arrays; end interface
-       interface display;module interface display_arrays;end interface
-       interface print;  module interface print_arrays;  end interface
-       interface export; module interface export_arrays; end interface
-       interface import; module interface import_arrays; end interface
+       interface init;   module interface init_arrays;          end interface
+       interface init;   module interface init_many_arrays;     end interface
+       interface delete; module interface delete_arrays;        end interface
+       interface delete; module interface delete_many_arrays;   end interface
+       interface display;module interface display_arrays;       end interface
+       interface display;module interface display_many_arrays;  end interface
+       interface print;  module interface print_arrays;         end interface
+       interface print;  module interface print_many_arrays;    end interface
+       interface export; module interface export_arrays;        end interface
+       interface import; module interface import_arrays;        end interface
+       interface export; module interface export_wrapper_arrays;end interface
+       interface import; module interface import_wrapper_arrays;end interface
 
        type ARRAYS
          private
@@ -114,12 +120,32 @@
          call export(this%a,un)
        end subroutine
 
+       subroutine export_wrapper_ARRAYS(this,dir,name)
+         implicit none
+         type(arrays),intent(in) :: this
+         character(len=*),intent(in) :: dir,name
+         integer :: un
+         un = new_and_open(dir,name)
+         call export(this,un)
+         close(un)
+       end subroutine
+
        subroutine import_ARRAYS(this,un)
          implicit none
          type(arrays),intent(inout) :: this
          integer,intent(in) :: un
          read(un,*) this%n
          call import(this%a,un)
+       end subroutine
+
+       subroutine import_wrapper_ARRAYS(this,dir,name)
+         implicit none
+         type(arrays),intent(inout) :: this
+         character(len=*),intent(in) :: dir,name
+         integer :: un
+         un = new_and_open(dir,name)
+         call import(this,un)
+         close(un)
        end subroutine
 
        end module

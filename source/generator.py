@@ -11,25 +11,30 @@ class generator:
 		self.module = OrderedDict()
 		self.module_list = []
 		self.used_modules = []
+		self.base_files = []
 		return
 
-	def set_directories(self,main):
+	def set_directories(self,main,PS):
 		self.d = GD.GOOFPY_directory()
 		GOOFPY_dir = os.path.dirname(os.path.abspath(__file__))
 		target_root = os.getcwd()
-		PS = '\\'
 		self.d.set_dir(GOOFPY_dir,target_root,main,PS)
 		self.set_class_list()
 		func.delete_entire_tree_safe(self.d.target_dir)
 		func.make_path(self.d.target_dir)
+		func.make_path(self.d.target_root+'bin'+self.d.PS)
+		self.base_dir = self.d.GOOFPY_dir+'base'+self.d.PS
+		print(self.base_dir)
 		return self
+
+	def add_base_files(self,base_files): self.base_files = self.base_files+base_files
 
 	def print(self): self.d.print()
 
 	def set_class_list(self):
 		print('Main file: '+self.d.main)
-		temp = func.read_file_contents(self.d.main)
-		temp = [x for x in temp if 'module_name=' in x.replace(' ','')]
+		temp = func.read_file_to_list(self.d.main)
+		temp = [x for x in temp if 'm_name=' in x.replace(' ','')]
 		temp = [x for x in temp if not x.replace(' ','').replace('\t','').startswith("#")] # Remove comments
 		temp = [x.split('=')[1] for x in temp]
 		temp = [x.replace('\'','').replace(' ','') for x in temp]
@@ -57,4 +62,8 @@ class generator:
 			func.write_string_to_file(path,'\n'.join(L))
 			N_tot = N_tot+len(L)
 		N_tot = N_tot
+		base_spaces = self.module[key].base_spaces
+
+		func.make_dot_bat(self.d.target_root,self.d.GOOFPY_dir,self.d.target_dir,self.class_list,self.base_dir,self.base_files,self.d.PS)
+		func.make_dummy_main(self.d.target_dir+'main_dummy.f90',self.class_list,base_spaces)
 		print('Number of lines generated (Total): ' + str(N_tot))

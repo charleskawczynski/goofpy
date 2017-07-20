@@ -84,7 +84,7 @@ class fortran_property:
     elif self.object_type=='primitive' and not self.allocatable:
       L = ['this%'+self.name+' = ' + self.default_value]
     elif self.object_type=='object' and self.allocatable:
-      L = L+ [self.spaces[4]+'call delete(this%'+self.name+'(i))']
+      L = L+ [self.spaces[4]+'call delete(this%'+self.name+'('+self.do_loop_iter+'))']
     elif self.object_type=='object' and not self.allocatable:
       L = ['call delete(this%'+self.name+')']
     if self.allocatable and not self.object_type=='primitive':
@@ -93,6 +93,12 @@ class fortran_property:
       L = L+[self.spaces[2]+'deallocate(this%'+self.name+')']
       L = L+['endif']
     return L
+
+  def set_default_primitives(self):
+    if self.object_type=='primitive' and self.class_=='integer':
+      self.default_value = '0'
+    if self.object_type=='primitive' and self.class_=='logical':
+      self.default_value = '.false.'
 
   def print(self):
     print('--------------------------------- property')
@@ -114,8 +120,9 @@ def init_all(name,class_,privacy,object_type,allocatable,rank,dimension,default_
   prop.rank = rank
   prop.allocatable = allocatable
   prop.default_value = default_value
+  prop.set_default_primitives()
 
-  if rank>1 and dimension<=1: raise ValueError('rank>1 and dimension<=1')
+  if rank>1 and dimension<=1 and not allocatable: raise ValueError('rank>1 and dimension<=1')
   if allocatable and dimension<=1: raise ValueError('allocatable and dimension<=1')
 
   prop.rank_s = (rank*':,')[:-1]
@@ -128,9 +135,10 @@ def init_all(name,class_,privacy,object_type,allocatable,rank,dimension,default_
     prop.assign_default_value = ''
   elif dimension>1 and not allocatable:
     prop.sig = ',dimension('+str(dimension)+')'
-    prop.assign_default_value = ' = '+default_value
+    prop.assign_default_value = ' = '+prop.default_value
   else:
-    prop.assign_default_value = ' = '+default_value
+    prop.assign_default_value = ' = '+prop.default_value
     prop.sig = ''
 
   return prop
+

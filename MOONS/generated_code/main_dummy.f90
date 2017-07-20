@@ -1,0 +1,11 @@
+       program main
+       use array_mod
+       use sparse_mod
+       use coordinates_mod
+       use grid_mod
+       use grid_field_mod
+       use block_mod
+       use mesh_mod
+       implicit none
+       write(*,*) "success!"
+       end program
