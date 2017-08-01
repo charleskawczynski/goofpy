@@ -11,6 +11,7 @@ class fortran_property:
     self.privacy = 'default_privacy'
     self.object_type = 'default_object_type'
     self.default_value = '0'
+    self.default_real = '0'
     self.spaces = []
 
   def set_do_loop_iter(self,do_loop_iter):
@@ -30,44 +31,68 @@ class fortran_property:
   def set_object_type(self,object_type): self.object_type = object_type;
   def get_object_type(self): return self.object_type;
 
-  def write_class_definition(self):
+  def write_class_definition(self,all_private):
+    if all_private: privacy_temp = ''
+    else: privacy_temp = ','+self.privacy
+
     if self.object_type=='primitive':
-      return [self.class_+self.sig+' :: '+self.name + self.assign_default_value]
+      L = [self.class_+self.sig+privacy_temp+' :: '+self.name + self.assign_default_value]
     elif self.object_type=='object':
-      return ['type(' + self.class_ + ')'+self.sig+' :: '+self.name]
+      L = ['type(' + self.class_ + ')'+self.sig+privacy_temp+' :: '+self.name]
+    elif self.object_type=='procedure':
+      L = ['procedure(' + self.class_ + '),pointer,nopass'+self.sig+privacy_temp+' :: '+self.name]
+    return L
+
+  def set_display_spaces(self,display_spaces): self.display_spaces = display_spaces
 
   def write_display(self):
+    L = []
     if self.object_type=='primitive':
-      return ["write(un,*) '" +self.name+ " = ',this%" + self.name]
+      L = ["write(un,*) '" +self.name+ self.display_spaces+ " = ',this%" + self.name]
+    elif self.object_type=='procedure': pass
     elif self.object_type=='object':
-      return ['call display' +  '(this%' + self.name + ',un)']
+      L = ['call display' +  '(this%' + self.name + ',un)']
+    return L
 
   def write_export(self):
+    L = []
     if self.object_type=='primitive':
-      return ['write(un,*) this%'  +self.name]
+      L = ['write(un,*) this%'  +self.name]
+    elif self.object_type=='procedure': pass
     elif self.object_type=='object':
-      return ['call export(this%' + self.name + ',un)']
+      L = ['call export(this%' + self.name + ',un)']
+    return L
 
   def write_import(self):
+    L = []
     if self.object_type=='primitive':
-      return ['read(un,*) this%'  +self.name]
+      L = ['read(un,*) this%'  +self.name]
+    elif self.object_type=='procedure': pass
     elif self.object_type=='object':
-      return ['call import(this%' + self.name + ',un)']
+      L = ['call import(this%' + self.name + ',un)']
+    return L
 
   def write_init_copy(self):
-    if self.allocatable:
-      L =     ['if (allocated(that%'+self.name+')) then']
+    L = []
+    if self.allocatable and self.rank>1:
+      L = L + ['if (allocated(that%'+self.name+')) then']
+      L = L + [self.spaces[2]+self.int_rank_shape]
+      L = L + [self.spaces[2]+'allocate(this%'+self.name+'('+self.int_rank_list+'))']
+    elif self.allocatable and not self.rank>1:
+      L = L + ['if (allocated(that%'+self.name+')) then']
       L = L + [self.spaces[2]+'allocate(this%'+self.name+'(size(that%'+self.name+')))']
-    if self.allocatable and not self.object_type=='primitive':
+    if self.allocatable and not (self.object_type=='primitive' or self.object_type=='procedure'):
       L = L + [self.spaces[2]+x for x in self.do_loop_start]
-    if self.object_type=='primitive' and self.allocatable:
+    if (self.object_type=='primitive' or self.object_type=='procedure') and self.allocatable:
       L = L + [self.spaces[2]+'this%'+self.name+' = that%' + self.name]
     elif self.object_type=='primitive' and not self.allocatable:
-      L = ['this%'+self.name+' = that%' + self.name]
+      L = L + ['this%'+self.name+' = that%' + self.name]
+    elif self.object_type=='procedure' and not self.allocatable:
+      L = L + ['this%'+self.name+' => that%' + self.name]
     elif self.object_type=='object' and self.allocatable:
       L = L + [self.spaces[4]+'call init(this%'+self.name+'('+self.do_loop_iter+'),that%' + self.name + '('+self.do_loop_iter+'))']
     elif self.object_type=='object' and not self.allocatable:
-      L = ['call init(this%'+self.name+',that%' + self.name + ')']
+      L = L + ['call init(this%'+self.name+',that%' + self.name + ')']
     if self.allocatable and not self.object_type=='primitive':
       L = L + [self.spaces[2]+'enddo']
     if self.allocatable:
@@ -75,30 +100,42 @@ class fortran_property:
     return L
 
   def write_delete(self):
+    L = []
     if self.allocatable:
-      L = ['if (allocated(this%'+self.name+')) then']
-    if self.allocatable and not self.object_type=='primitive':
-      L = L+[self.spaces[2]+x for x in self.do_loop_start]
+      L = L + ['if (allocated(this%'+self.name+')) then']
+    if self.allocatable and not (self.object_type=='primitive' or self.object_type=='procedure'):
+      L = L + [self.spaces[2]+x for x in self.do_loop_start]
     if self.object_type=='primitive' and self.allocatable:
       L = L + [self.spaces[2]+'this%'+self.name+' = ' + self.default_value]
+    if self.object_type=='procedure' and self.allocatable:
+      L = L + [self.spaces[2]+'nullify(this%'+self.name+')']
     elif self.object_type=='primitive' and not self.allocatable:
-      L = ['this%'+self.name+' = ' + self.default_value]
+      L = L + ['this%'+self.name+' = ' + self.default_value]
+    elif self.object_type=='procedure' and not self.allocatable:
+      L = L + [self.spaces[2]+'nullify(this%'+self.name+')']
     elif self.object_type=='object' and self.allocatable:
-      L = L+ [self.spaces[4]+'call delete(this%'+self.name+'('+self.do_loop_iter+'))']
+      L = L + [self.spaces[4]+'call delete(this%'+self.name+'('+self.do_loop_iter+'))']
     elif self.object_type=='object' and not self.allocatable:
-      L = ['call delete(this%'+self.name+')']
+      L = L + ['call delete(this%'+self.name+')']
     if self.allocatable and not self.object_type=='primitive':
       L = L + [self.spaces[2]+'enddo']
     if self.allocatable:
-      L = L+[self.spaces[2]+'deallocate(this%'+self.name+')']
-      L = L+['endif']
+      L = L + [self.spaces[2]+'deallocate(this%'+self.name+')']
+      L = L + ['endif']
     return L
 
   def set_default_primitives(self):
-    if self.object_type=='primitive' and self.class_=='integer':
+    primitive_list = ['integer','logical','character','real']
+    if self.object_type=='primitive' and 'integer' in self.class_.lower():
       self.default_value = '0'
-    if self.object_type=='primitive' and self.class_=='logical':
+    if self.object_type=='primitive' and 'logical' in self.class_.lower():
       self.default_value = '.false.'
+    if self.object_type=='primitive' and 'character' in self.class_.lower():
+      self.default_value = "' '"
+    if self.object_type=='primitive' and 'real' in self.class_.lower():
+      self.default_value = self.default_real
+
+  def set_default_real(self,default_real): self.default_real = default_real
 
   def print(self):
     print('--------------------------------- property')
@@ -109,36 +146,64 @@ class fortran_property:
     print('---------------------------------')
     return
 
-def init_all(name,class_,privacy,object_type,allocatable,rank,dimension,default_value):
-  prop = fortran_property()
-  prop.name = name.lower()
-  prop.class_ = class_.lower()
-  prop.privacy = privacy.lower()
-  prop.object_type = object_type.lower()
-  prop.dimension = dimension
-  prop.dimension_s = dimension
-  prop.rank = rank
-  prop.allocatable = allocatable
-  prop.default_value = default_value
-  prop.set_default_primitives()
+  def init_remaining(self,name,class_,privacy,allocatable = False,rank = 1,dimension = 1,procedure = False):
+    self.name = name.lower()
+    self.class_ = class_.lower()
+    self.privacy = privacy.lower()
 
-  if rank>1 and dimension<=1 and not allocatable: raise ValueError('rank>1 and dimension<=1')
-  if allocatable and dimension<=1: raise ValueError('allocatable and dimension<=1')
+    self.dimension = dimension
+    self.procedure = procedure
+    self.dimension_s = dimension
+    self.rank = rank
+    self.name_length = len(name)
+    self.allocatable = allocatable
 
-  prop.rank_s = (rank*':,')[:-1]
+    primitive_list = ['integer','logical','real','character']
+    if any([x in class_  for x in primitive_list if not '_' in class_]):
+      self.object_type = 'primitive'
+    else:
+      if procedure:
+        self.object_type = 'procedure'
+      else:
+        self.object_type = 'object'
+    self.set_default_primitives()
 
-  if allocatable and dimension>1: prop.dimension_s = prop.rank_s
-  else: prop.dimension_s = str(dimension)
+    if rank>1 and dimension<=1 and not allocatable: raise ValueError('rank>1 and dimension<=1')
+    if allocatable and dimension<=1: raise ValueError('allocatable and dimension<=1')
 
-  if dimension>1 and allocatable:
-    prop.sig = ',dimension('+prop.rank_s+'),allocatable'
-    prop.assign_default_value = ''
-  elif dimension>1 and not allocatable:
-    prop.sig = ',dimension('+str(dimension)+')'
-    prop.assign_default_value = ' = '+prop.default_value
-  else:
-    prop.assign_default_value = ' = '+prop.default_value
-    prop.sig = ''
+    self.rank_deffered = (rank*':,')[:-1]
+    if rank>1:
+      i_rank_s = 's_'+name
+      self.int_rank_def = 'integer,dimension('+str(rank)+') :: '+i_rank_s
+      self.int_rank_shape = i_rank_s+' = shape(that%'+name+')'
+      self.int_rank_list = ''.join([i_rank_s+'('+str(x+1)+'),' for x in range(rank)])[:-1]
+    else:
+      self.int_rank_def = ''
+      self.int_rank_shape = ''
+      self.int_rank_list = ''
 
-  return prop
+    if allocatable and dimension>1: self.dimension_s = self.rank_deffered
+    else: self.dimension_s = str(dimension)
 
+    if self.object_type=='primitive' and 'character' in class_.lower():
+      if dimension>1 and allocatable:
+        self.sig = '(len='+str(dimension)+')'+',dimension('+self.rank_deffered+'),allocatable'
+        self.assign_default_value = ''
+      elif dimension>1 and not allocatable:
+        self.sig = '(len='+str(dimension)+')'
+        self.assign_default_value = ' = '+self.default_value
+      else:
+        self.assign_default_value = ' = '+self.default_value
+        self.sig = ''
+    else:
+      if dimension>1 and allocatable:
+        self.sig = ',dimension('+self.rank_deffered+'),allocatable'
+        self.assign_default_value = ''
+      elif dimension>1 and not allocatable:
+        self.sig = ',dimension('+str(dimension)+')'
+        self.assign_default_value = ' = '+self.default_value
+      else:
+        self.assign_default_value = ' = '+self.default_value
+        self.sig = ''
+
+    return self

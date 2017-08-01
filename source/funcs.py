@@ -16,19 +16,19 @@ def flatten(foo):
             l.append(x)
     return l
 
-def read_file_to_list(file_name):
+def read_file_to_list(file_name,caller):
     try:
         f = open(file_name,'r+')
         L = f.read().split('\n')
     except:
         L = []
-        print(' ********* READ ERROR ********* read_file_to_list ')
-        print(' ********* READ ERROR ********* read_file_to_list ')
-        print(' ********* READ ERROR ********* read_file_to_list ')
+        print(' ********* READ ERROR ********* '+caller)
+        print(' ********* READ ERROR ********* '+caller)
+        print(' ********* READ ERROR ********* '+caller)
     return L
 
 def read_file_to_string(file_name):
-    return '\n'.join(read_file_to_list(file_name))
+    return '\n'.join(read_file_to_list(file_name,'read_file_to_string'))
 
 def write_string_to_file(file_name,s):
     try:
@@ -91,8 +91,12 @@ def make_dot_bat(target_root,source_dir,generated_path,class_list,base_dir,base_
     L = ['-c -o '+ x.replace('.f90','.o')+ x + '\n' for x in L]
     L = [prefix + x for x in L]
     # print('\n'.join(L))
-    L = L + [prefix+' -o output '+generated_path+'main_dummy.f90 '+object_files_s]
+    L = L + [prefix+' -o output '+generated_path.replace(target_root,'')+'main_dummy.f90 '+object_files_s]
     L = L + ['\n output.exe']
+    L = L + ['\n cd generated_code']
+    L = L + ['\n del *.o']
+    L = L + ['\n cd ..']
+    # print('\n'.join(L))
     L = [''.join(L)]
     write_list_to_file(target_root+'run.bat',L)
     return
@@ -106,7 +110,7 @@ def get_list_of_module_names(file_list):
     return flatten([d[key] for key in d])
 
 def get_module_name(f):
-    L = read_file_to_list(f)
+    L = read_file_to_list(f,'get_module_name')
     L = [x.lower() for x in L]
     L = [x.lstrip() for x in L]
     L = [x.rstrip() for x in L]
@@ -126,7 +130,7 @@ def get_main_program(path,FL):
     fext = '.f90'
     program_files = []
     for f in FL:
-        L = read_file_to_list(path + f + fext)
+        L = read_file_to_list(path + f + fext,'get_main_program')
         L = [x.lower() for x in L]
         L = [x.lstrip() for x in L]
         L = [x.rstrip() for x in L]
@@ -140,7 +144,7 @@ def sort_files_by_dependency(file_list,module_names):
     d = OrderedDict()
     SL = []
     for fn,mn in zip(file_list,module_names):
-        L = read_file_to_list(fn)
+        L = read_file_to_list(fn,'sort_files_by_dependency')
         L = [x.lower() for x in L]
         L = [x for x in L if not x.startswith('c')]
         L = [x.lstrip() for x in L]

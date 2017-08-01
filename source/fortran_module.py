@@ -11,6 +11,9 @@ class fortran_module:
         self.do_loop_iter = 'i_iter'
         self.implicitNone = 'implicit none'
         self.base_spaces = ' '*7
+        self.raw_lines = []
+        self.raw_lines_used = False
+        self.any_allocatables = False
         # self.base_spaces = ''
         self.spaces = ['' for x in range(50)]
         for i in range(len(self.spaces)):
@@ -18,23 +21,23 @@ class fortran_module:
         self.stars = ['' for x in range(30)]
         for i in range(len(self.stars)):
             self.stars[i] = '*'*i
-        self.privacy = 'private'
 
     def set_base_spaces(self,base_spaces): self.base_spaces = base_spaces
 
     def set_name(self,name): self.name = name.lower()
+    def set_folder_name(self,folder_name): self.folder_name = folder_name.lower()
+    def set_default_real(self,default_real): self.default_real = default_real
     def get_name(self): return self.name
-
-    def set_privacy(self,privacy): self.privacy = privacy.lower()
-    def get_privacy(self): return self.privacy
 
     def get_props(self): return self.prop
 
-    def add_prop(self,prop):
+    def add_prop(self,name,class_,privacy,allocatable = False,rank = 1,dimension = 1,procedure = False):
+        prop = FP.fortran_property()
+        prop.set_default_real(self.default_real)
+        prop.init_remaining(name,class_,privacy,allocatable,rank,dimension,procedure)
         self.prop[prop.name] = prop
         allocatables = [self.prop[k].allocatable and not self.prop[k].object_type=='primitive' for k in self.prop]
         self.any_allocatables = any(allocatables)
-        self.prop[prop.name].set_default_primitives()
 
     def print_props(self):
         for key in self.prop:
@@ -46,9 +49,13 @@ class fortran_module:
     def set_used_modules(self,used_modules): self.used_modules = used_modules
     def get_used_modules(self): return self.used_modules
 
+    def add_raw_lines(self,raw_lines):
+        self.raw_lines = self.raw_lines+raw_lines
+        self.raw_lines_used = True
+
     ################################################################################*/
 
-    def contruct_fortran_module(self,class_list):
+    def contruct_fortran_module(self,class_list,base_modules):
         c = []
         for key in self.prop:
             self.prop[key].set_do_loop_iter(self.do_loop_iter)
@@ -56,10 +63,10 @@ class fortran_module:
 
         self.class_list = class_list
         c.append('module ' + self.get_name().upper() + '_mod')
-        c.append(self.write_used_modules())
+        c.append(self.write_used_modules(base_modules))
         c.append([self.implicitNone]+[''])
         c.append(self.write_selected_kinds())
-        c.append(self.privacy)
+        c.append(['private'])
         c.append(['public :: '+self.name.upper()])
         c.append(['public :: init,delete,display,print,export,import']+[''])
         c.append(self.write_interfaces()+[''])
@@ -72,24 +79,27 @@ class fortran_module:
         # # Break lines to maximum number of characters
         l = func.flatten(c)
         l = [x for x in l if not x==None]
+        if self.raw_lines_used: l = self.raw_lines
         l = [self.base_spaces+x if not (x=='' or x.startswith('#')) else x for x in l]
         # l = [self.base_spaces+x for x in l]
         s = [self.breakLine(k,[]) for k in l]
         s = l
         return s
 
-    def write_used_modules(self):
+    def write_used_modules(self,base_modules):
         dependent=[]
         c = [self.used_modules]
         c = [item for sublist in c for item in sublist]
         for key in self.prop:
-            dependent.append([x for x in self.class_list if self.prop[key].get_class()==x])
+            dependent.append([x for x in self.class_list if self.prop[key].get_class().lower()==x.lower()])
+            dependent.append([x for x in base_modules if self.prop[key].get_class().lower()==x.lower()])
         dependent = list(set([item for sublist in dependent for item in sublist if item]))
         c = c+[x+'_mod' for x in dependent]
         return ['use '+x if x else None for x in c]
 
     def write_selected_kinds(self):
         L = []
+        L = L+['integer,parameter :: li = selected_int_kind(16)']
         L = L+['#ifdef _QUAD_PRECISION_']
         L = L+['integer,parameter :: cp = selected_real_kind(32) ! Quad precision']
         L = L+['#else']
@@ -165,9 +175,9 @@ class fortran_module:
         p = [self.prop[k].get_privacy() for k in self.prop]
         self.all_private = all([x=='private' for x in p])
         if self.all_private:
-            c=c+[self.spaces[2]+self.get_privacy()]
+            c=c+[self.spaces[2]+'private']
         for key in self.prop:
-            c.append([self.spaces[2]+x for x in self.prop[key].write_class_definition()])
+            c.append([self.spaces[2]+x for x in self.prop[key].write_class_definition(self.all_private)])
         return c
 
     def init_copy(self):
@@ -180,6 +190,9 @@ class fortran_module:
         c.append(self.spaces[2] + 'type(' + self.name + '),intent(in) :: that' )
         if self.any_allocatables:
             c.append(self.spaces[2] + 'integer :: '+self.do_loop_iter)
+        for key in self.arg_objects:
+            if self.arg_objects[key].rank>1:
+                c.append([self.spaces[2]+self.arg_objects[key].int_rank_def])
         c.append(self.spaces[2] + 'call delete(this)')
         for key in self.arg_objects:
             c.append([self.spaces[2]+x for x in self.arg_objects[key].write_init_copy()])
@@ -205,6 +218,12 @@ class fortran_module:
         c.append(self.spaces[2] + self.implicitNone)
         c.append(self.spaces[2] + 'type(' + self.name + '),intent(in) :: this' )
         c.append(self.spaces[2] + 'integer,intent(in) :: un' )
+
+        st_n = [len(self.prop[key].name) for key in self.prop]
+        sp_n = [self.spaces[max(st_n)-x] for x in st_n]
+        for key,s in zip(self.prop,sp_n):
+            self.prop[key].set_display_spaces(s)
+
         for key in self.prop:
             c.append([self.spaces[2]+x for x in self.prop[key].write_display()])
         c.append(self.end_sub())

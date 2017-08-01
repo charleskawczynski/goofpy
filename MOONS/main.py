@@ -14,11 +14,27 @@ sys.path.append(generatorPath)
 import generator as g
 import fortran_property as FP
 
+import modules.sim_params as sim_params
+import modules.var_set as var_set
+import modules.grid as grid
+import modules.block as block
+import modules.grid_field as grid_field
+import modules.data_location as data_location
+import modules.boundary_conditions as boundary_conditions
+import modules.block_field as block_field
+import modules.mesh as mesh
+import modules.sub_domain as sub_domain
+import modules.apply_face_BC_op as apply_face_BC_op
+import modules.procedure_array as procedure_array
+
 # add_prop parameters:
 #     1) name (string)
 #     2) data type (integer,real etc.) (string)
 #     3) Object / allocatable / Primitive / Parameter (string)
 #     4) dimension (int)
+
+# init(var,type,privacy,allocatable,rank,dimension)
+# init(var,type,privacy) # defaults to allocatable = False, rank = 1, dimension = 1
 
 g = g.generator()
 g.set_directories(os.path.abspath(__file__),PS)
@@ -28,86 +44,32 @@ g.add_base_files(['IO'+PS+'IO_check.f90'])
 g.add_base_files(['IO'+PS+'IO_tools.f90'])
 g.add_base_files(['string'+PS+'string.f90'])
 g.add_base_files(['string'+PS+'string_aux.f90'])
+g.add_base_modules(['string'])
+
 # g.print()
-prim = 'primitive'
-obj = 'object'
-priv = 'public'
+priv = 'private'
 log = 'logical'
-# cp = 'real(selected_real_kind(32))' # ! Quad precision
-# cp = 'real(selected_real_kind(8))'  # ! Single precision
 real = 'real(cp)' # ! Double precision (default)
+T = True
+F = False
+g.set_default_real('0.0_cp')
 
-m_name = 'array'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('f',real,priv,prim,True,1,6,'0.0_cp'))
-g.module[m_name].add_prop(FP.init_all('N','integer',priv,prim,False,0,0,'0'))
+g = var_set.add_modules(g,T,F,priv,real)
+g = sim_params.add_modules(g,T,F,priv,real)
 
-m_name = 'sparse'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('L','array',priv,obj,False,1,1,'0'))
-g.module[m_name].add_prop(FP.init_all('D','array',priv,obj,False,1,1,'0'))
-g.module[m_name].add_prop(FP.init_all('U','array',priv,obj,False,1,1,'0'))
-g.module[m_name].add_prop(FP.init_all('staggered','logical',priv,prim,False,0,0,'0'))
+g = grid.add_modules(g,T,F,priv,real)
+g = grid_field.add_modules(g,T,F,priv,real)
+g = data_location.add_modules(g,T,F,priv,real)
+g = sub_domain.add_modules(g,T,F,priv,real)
 
-m_name = 'coordinates'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('hn','array',priv,obj,False,1,1,'0'))
-g.module[m_name].add_prop(FP.init_all('hc','array',priv,obj,False,1,1,'0'))
-g.module[m_name].add_prop(FP.init_all('col','sparse',priv,obj,False,1,2,'0'))
-g.module[m_name].add_prop(FP.init_all('stag','sparse',priv,obj,False,1,2,'0'))
+g = apply_face_BC_op.add_modules(g,T,F,priv,real) # Handwritten interfaces
 
-m_name = 'grid'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('c','coordinates',priv,obj,False,1,3,'0'))
+g = procedure_array.add_modules(g,T,F,priv,real)
+g = boundary_conditions.add_modules(g,T,F,priv,real)
 
-m_name = 'grid_field'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('f',real,priv,prim,True,3,3,'0'))
-g.module[m_name].add_prop(FP.init_all('s','integer',priv,prim,False,1,3,'0'))
-g.module[m_name].add_prop(FP.init_all('s_1D','integer',priv,prim,False,1,1,'0'))
+g = block.add_modules(g,T,F,priv,real)
+g = block_field.add_modules(g,T,F,priv,real)
+g = mesh.add_modules(g,T,F,priv,real)
 
-m_name = 'block'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('g','grid',priv,obj,False,1,3,'0'))
-
-m_name = 'mesh'
-g.add_module(m_name)
-g.module[m_name].set_used_modules(['IO_tools_mod'])
-g.module[m_name].set_privacy('private')
-g.module[m_name].add_prop(FP.init_all('B','block',priv,obj,True,1,3,'0'))
-
-# m_name = 'simple_int_tensor'
-# g.add_module(m_name)
-# g.module[m_name].set_used_modules(['IO_tools_mod'])
-# g.module[m_name].set_privacy('private')
-# g.module[m_name].add_prop(FP.init_all('eye','integer',priv,prim,False,1,3,'0'))
-
-# m_name = 'export_logicals'
-# g.add_module(m_name)
-# g.module[m_name].set_used_modules(['IO_tools_mod'])
-# g.module[m_name].set_privacy('private')
-# L=['export_analytic','export_meshes','export_vort_SF','export_mat_props','export_cell_volume','export_ICs','export_planar','export_symmetric','export_mesh_block','export_soln_only']
-# for k in L: g.module[m_name].add_prop(FP.init_all(k,'logical',priv,prim,False,1,1,'0'))
-
-# m_name = 'TMP'
-# g.add_module(m_name)
-# g.module[m_name].set_used_modules(['IO_tools_mod'])
-# g.module[m_name].set_privacy('private'
-# g.module[m_name].add_prop(FP.init_all('g','grid',priv,obj,False,1,1,'0'))
-# g.module[m_name].add_prop(FP.init_all('b','grid',priv,obj,True,1,2,'0'))
-# g.module[m_name].add_prop(FP.init_all('i','integer',priv,prim,False,1,1,'0'))
-# g.module[m_name].add_prop(FP.init_all('L','logical',priv,prim,False,1,1,'.false.'))
 
 g.generate_code()

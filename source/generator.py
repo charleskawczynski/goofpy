@@ -1,6 +1,7 @@
 import os
 import sys
 from collections import OrderedDict
+import collections
 import GOOFPY_directory as GD
 import fortran_module as FM
 import funcs as func
@@ -12,6 +13,7 @@ class generator:
 		self.module_list = []
 		self.used_modules = []
 		self.base_files = []
+		self.base_modules = []
 		return
 
 	def set_directories(self,main,PS):
@@ -19,7 +21,6 @@ class generator:
 		GOOFPY_dir = os.path.dirname(os.path.abspath(__file__))
 		target_root = os.getcwd()
 		self.d.set_dir(GOOFPY_dir,target_root,main,PS)
-		self.set_class_list()
 		func.delete_entire_tree_safe(self.d.target_dir)
 		func.make_path(self.d.target_dir)
 		func.make_path(self.d.target_root+'bin'+self.d.PS)
@@ -27,43 +28,45 @@ class generator:
 		print(self.base_dir)
 		return self
 
+	def set_default_real(self,default_real): self.default_real = default_real
+
 	def add_base_files(self,base_files): self.base_files = self.base_files+base_files
+	def add_base_modules(self,base_modules): self.base_modules = self.base_modules+base_modules
 
 	def print(self): self.d.print()
-
-	def set_class_list(self):
-		print('Main file: '+self.d.main)
-		temp = func.read_file_to_list(self.d.main)
-		temp = [x for x in temp if 'm_name=' in x.replace(' ','')]
-		temp = [x for x in temp if not x.replace(' ','').replace('\t','').startswith("#")] # Remove comments
-		temp = [x.split('=')[1] for x in temp]
-		temp = [x.replace('\'','').replace(' ','') for x in temp]
-		class_list = temp
-		self.class_list = class_list
-		return
 
 	def add_module(self,module_name):
 		self.module_list = self.module_list+[module_name]
 		self.module[module_name] = FM.fortran_module()
-		self.module[module_name].set_name(module_name)
+		self.module[module_name].set_default_real(self.default_real)
 		self.module[module_name].set_name(module_name)
 		return
 
 	def generate_code(self):
 		N_tot = 0
-		print(' ----------------------------- class_list ----------------------------- ')
-		print('\n'.join(self.class_list))
-		print(' ---------------------------------------------------------------------- ')
+		print(' ----------------------------- module_list ----------------------------- ')
+		print('\n'.join(self.module_list))
+		print(' ----------------------------------------------------------------------- ')
+		duplicates = [item for item, count in collections.Counter(self.module_list).items() if count > 1]
+		# if not is_empty(duplicates):
+		PS = self.d.PS
+		if len(duplicates)>0:
+			raise ValueError('Error: Duplicate classes: '+','.join(duplicates))
+
 		for key in self.module:
-			lofl = self.module[key].contruct_fortran_module(self.class_list)
+			func.make_path(self.d.target_dir + self.module[key].folder_name + PS)
+
+		for key in self.module:
+			lofl = self.module[key].contruct_fortran_module(self.module_list,self.base_modules)
 			L = lofl
-			# L = [item for sublist in lofl for item in sublist]
-			path = self.d.target_dir + self.d.PS+key+self.d.fext
+			path = self.d.target_dir + self.module[key].folder_name + PS + key+self.d.fext
+			# print(path.replace(self.d.target_root,''))
 			func.write_string_to_file(path,'\n'.join(L))
 			N_tot = N_tot+len(L)
 		N_tot = N_tot
 		base_spaces = self.module[key].base_spaces
+		module_list_temp = [self.module[key].folder_name+PS+self.module[key].name for key in self.module]
 
-		func.make_dot_bat(self.d.target_root,self.d.GOOFPY_dir,self.d.target_dir,self.class_list,self.base_dir,self.base_files,self.d.PS)
-		func.make_dummy_main(self.d.target_dir+'main_dummy.f90',self.class_list,base_spaces)
+		func.make_dot_bat(self.d.target_root,self.d.GOOFPY_dir,self.d.target_dir,module_list_temp,self.base_dir,self.base_files,self.d.PS)
+		func.make_dummy_main(self.d.target_dir+'main_dummy.f90',self.module_list,base_spaces)
 		print('Number of lines generated (Total): ' + str(N_tot))
