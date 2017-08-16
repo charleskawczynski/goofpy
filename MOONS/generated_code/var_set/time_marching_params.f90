@@ -1,40 +1,24 @@
-       module TIME_MARCHING_PARAMS_mod
+       module time_marching_params_mod
+       use current_precision_mod
        use IO_tools_mod
-       use string_mod
        use RK_Params_mod
+       use string_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: TIME_MARCHING_PARAMS
+       public :: time_marching_params
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_time_marching_params;          end interface
-       interface init;   module procedure init_many_time_marching_params;     end interface
        interface delete; module procedure delete_time_marching_params;        end interface
-       interface delete; module procedure delete_many_time_marching_params;   end interface
        interface display;module procedure display_time_marching_params;       end interface
-       interface display;module procedure display_many_time_marching_params;  end interface
        interface print;  module procedure print_time_marching_params;         end interface
-       interface print;  module procedure print_many_time_marching_params;    end interface
        interface export; module procedure export_time_marching_params;        end interface
-       interface export; module procedure export_many_time_marching_params;   end interface
        interface import; module procedure import_time_marching_params;        end interface
-       interface import; module procedure import_many_time_marching_params;   end interface
        interface export; module procedure export_wrapper_time_marching_params;end interface
        interface import; module procedure import_wrapper_time_marching_params;end interface
 
-       type TIME_MARCHING_PARAMS
-         private
+       type time_marching_params
          type(rk_params) :: rkp
          integer :: multistep_iter = 0
          integer :: un = 0
@@ -51,7 +35,7 @@
 
        contains
 
-       subroutine init_TIME_MARCHING_PARAMS(this,that)
+       subroutine init_time_marching_params(this,that)
          implicit none
          type(time_marching_params),intent(inout) :: this
          type(time_marching_params),intent(in) :: that
@@ -70,19 +54,7 @@
          call init(this%name,that%name)
        end subroutine
 
-       subroutine init_many_TIME_MARCHING_PARAMS(this,that)
-         implicit none
-         type(time_marching_params),dimension(:),intent(inout) :: this
-         type(time_marching_params),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_TIME_MARCHING_PARAMS(this)
+       subroutine delete_time_marching_params(this)
          implicit none
          type(time_marching_params),intent(inout) :: this
          call delete(this%rkp)
@@ -99,21 +71,11 @@
          call delete(this%name)
        end subroutine
 
-       subroutine delete_many_TIME_MARCHING_PARAMS(this)
-         implicit none
-         type(time_marching_params),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_TIME_MARCHING_PARAMS(this,un)
+       subroutine display_time_marching_params(this,un)
          implicit none
          type(time_marching_params),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- time_marching_params'
          call display(this%rkp,un)
          write(un,*) 'multistep_iter = ',this%multistep_iter
          write(un,*) 'un             = ',this%un
@@ -128,31 +90,13 @@
          call display(this%name,un)
        end subroutine
 
-       subroutine display_many_TIME_MARCHING_PARAMS(this,un)
-         implicit none
-         type(time_marching_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_TIME_MARCHING_PARAMS(this)
+       subroutine print_time_marching_params(this)
          implicit none
          type(time_marching_params),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_TIME_MARCHING_PARAMS(this)
-         implicit none
-         type(time_marching_params),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_TIME_MARCHING_PARAMS(this,un)
+       subroutine export_time_marching_params(this,un)
          implicit none
          type(time_marching_params),intent(in) :: this
          integer,intent(in) :: un
@@ -170,22 +114,11 @@
          call export(this%name,un)
        end subroutine
 
-       subroutine export_many_TIME_MARCHING_PARAMS(this,un)
-         implicit none
-         type(time_marching_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_TIME_MARCHING_PARAMS(this,un)
+       subroutine import_time_marching_params(this,un)
          implicit none
          type(time_marching_params),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%rkp,un)
          read(un,*) this%multistep_iter
          read(un,*) this%un
@@ -200,19 +133,7 @@
          call import(this%name,un)
        end subroutine
 
-       subroutine import_many_TIME_MARCHING_PARAMS(this,un)
-         implicit none
-         type(time_marching_params),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_TIME_MARCHING_PARAMS(this,dir,name)
+       subroutine export_wrapper_time_marching_params(this,dir,name)
          implicit none
          type(time_marching_params),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -222,7 +143,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_TIME_MARCHING_PARAMS(this,dir,name)
+       subroutine import_wrapper_time_marching_params(this,dir,name)
          implicit none
          type(time_marching_params),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

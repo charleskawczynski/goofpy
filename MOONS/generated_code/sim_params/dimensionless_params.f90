@@ -1,38 +1,23 @@
-       module DIMENSIONLESS_PARAMS_mod
+       module dimensionless_params_mod
+       use current_precision_mod
        use IO_tools_mod
+       use string_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: DIMENSIONLESS_PARAMS
+       public :: dimensionless_params
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_dimensionless_params;          end interface
-       interface init;   module procedure init_many_dimensionless_params;     end interface
        interface delete; module procedure delete_dimensionless_params;        end interface
-       interface delete; module procedure delete_many_dimensionless_params;   end interface
        interface display;module procedure display_dimensionless_params;       end interface
-       interface display;module procedure display_many_dimensionless_params;  end interface
        interface print;  module procedure print_dimensionless_params;         end interface
-       interface print;  module procedure print_many_dimensionless_params;    end interface
        interface export; module procedure export_dimensionless_params;        end interface
-       interface export; module procedure export_many_dimensionless_params;   end interface
        interface import; module procedure import_dimensionless_params;        end interface
-       interface import; module procedure import_many_dimensionless_params;   end interface
        interface export; module procedure export_wrapper_dimensionless_params;end interface
        interface import; module procedure import_wrapper_dimensionless_params;end interface
 
-       type DIMENSIONLESS_PARAMS
-         private
+       type dimensionless_params
          real(cp) :: re = 0.0_cp
          real(cp) :: al = 0.0_cp
          real(cp) :: n = 0.0_cp
@@ -54,11 +39,13 @@
          real(cp) :: l_eta = 0.0_cp
          real(cp) :: u_eta = 0.0_cp
          real(cp) :: t_eta = 0.0_cp
+         type(string) :: dir
+         type(string) :: name
        end type
 
        contains
 
-       subroutine init_DIMENSIONLESS_PARAMS(this,that)
+       subroutine init_dimensionless_params(this,that)
          implicit none
          type(dimensionless_params),intent(inout) :: this
          type(dimensionless_params),intent(in) :: that
@@ -84,21 +71,11 @@
          this%l_eta = that%l_eta
          this%u_eta = that%u_eta
          this%t_eta = that%t_eta
+         call init(this%dir,that%dir)
+         call init(this%name,that%name)
        end subroutine
 
-       subroutine init_many_DIMENSIONLESS_PARAMS(this,that)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(inout) :: this
-         type(dimensionless_params),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_DIMENSIONLESS_PARAMS(this)
+       subroutine delete_dimensionless_params(this)
          implicit none
          type(dimensionless_params),intent(inout) :: this
          this%re = 0.0_cp
@@ -122,23 +99,15 @@
          this%l_eta = 0.0_cp
          this%u_eta = 0.0_cp
          this%t_eta = 0.0_cp
+         call delete(this%dir)
+         call delete(this%name)
        end subroutine
 
-       subroutine delete_many_DIMENSIONLESS_PARAMS(this)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_DIMENSIONLESS_PARAMS(this,un)
+       subroutine display_dimensionless_params(this,un)
          implicit none
          type(dimensionless_params),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- dimensionless_params'
          write(un,*) 're                   = ',this%re
          write(un,*) 'al                   = ',this%al
          write(un,*) 'n                    = ',this%n
@@ -160,33 +129,17 @@
          write(un,*) 'l_eta                = ',this%l_eta
          write(un,*) 'u_eta                = ',this%u_eta
          write(un,*) 't_eta                = ',this%t_eta
+         call display(this%dir,un)
+         call display(this%name,un)
        end subroutine
 
-       subroutine display_many_DIMENSIONLESS_PARAMS(this,un)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_DIMENSIONLESS_PARAMS(this)
+       subroutine print_dimensionless_params(this)
          implicit none
          type(dimensionless_params),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_DIMENSIONLESS_PARAMS(this)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_DIMENSIONLESS_PARAMS(this,un)
+       subroutine export_dimensionless_params(this,un)
          implicit none
          type(dimensionless_params),intent(in) :: this
          integer,intent(in) :: un
@@ -211,24 +164,15 @@
          write(un,*) this%l_eta
          write(un,*) this%u_eta
          write(un,*) this%t_eta
+         call export(this%dir,un)
+         call export(this%name,un)
        end subroutine
 
-       subroutine export_many_DIMENSIONLESS_PARAMS(this,un)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_DIMENSIONLESS_PARAMS(this,un)
+       subroutine import_dimensionless_params(this,un)
          implicit none
          type(dimensionless_params),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%re
          read(un,*) this%al
          read(un,*) this%n
@@ -250,21 +194,11 @@
          read(un,*) this%l_eta
          read(un,*) this%u_eta
          read(un,*) this%t_eta
+         call import(this%dir,un)
+         call import(this%name,un)
        end subroutine
 
-       subroutine import_many_DIMENSIONLESS_PARAMS(this,un)
-         implicit none
-         type(dimensionless_params),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_DIMENSIONLESS_PARAMS(this,dir,name)
+       subroutine export_wrapper_dimensionless_params(this,dir,name)
          implicit none
          type(dimensionless_params),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -274,7 +208,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_DIMENSIONLESS_PARAMS(this,dir,name)
+       subroutine import_wrapper_dimensionless_params(this,dir,name)
          implicit none
          type(dimensionless_params),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

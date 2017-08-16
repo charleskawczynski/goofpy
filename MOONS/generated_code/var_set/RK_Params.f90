@@ -1,39 +1,22 @@
-       module RK_PARAMS_mod
+       module rk_params_mod
        use IO_tools_mod
        use array_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: RK_PARAMS
+       public :: rk_params
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_rk_params;          end interface
-       interface init;   module procedure init_many_rk_params;     end interface
        interface delete; module procedure delete_rk_params;        end interface
-       interface delete; module procedure delete_many_rk_params;   end interface
        interface display;module procedure display_rk_params;       end interface
-       interface display;module procedure display_many_rk_params;  end interface
        interface print;  module procedure print_rk_params;         end interface
-       interface print;  module procedure print_many_rk_params;    end interface
        interface export; module procedure export_rk_params;        end interface
-       interface export; module procedure export_many_rk_params;   end interface
        interface import; module procedure import_rk_params;        end interface
-       interface import; module procedure import_many_rk_params;   end interface
        interface export; module procedure export_wrapper_rk_params;end interface
        interface import; module procedure import_wrapper_rk_params;end interface
 
-       type RK_PARAMS
-         private
+       type rk_params
          integer :: n_stages = 0
          integer :: n = 0
          logical :: rk_active = .false.
@@ -45,7 +28,7 @@
 
        contains
 
-       subroutine init_RK_PARAMS(this,that)
+       subroutine init_rk_params(this,that)
          implicit none
          type(rk_params),intent(inout) :: this
          type(rk_params),intent(in) :: that
@@ -59,19 +42,7 @@
          call init(this%beta,that%beta)
        end subroutine
 
-       subroutine init_many_RK_PARAMS(this,that)
-         implicit none
-         type(rk_params),dimension(:),intent(inout) :: this
-         type(rk_params),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_RK_PARAMS(this)
+       subroutine delete_rk_params(this)
          implicit none
          type(rk_params),intent(inout) :: this
          this%n_stages = 0
@@ -83,21 +54,11 @@
          call delete(this%beta)
        end subroutine
 
-       subroutine delete_many_RK_PARAMS(this)
-         implicit none
-         type(rk_params),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_RK_PARAMS(this,un)
+       subroutine display_rk_params(this,un)
          implicit none
          type(rk_params),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- rk_params'
          write(un,*) 'n_stages  = ',this%n_stages
          write(un,*) 'n         = ',this%n
          write(un,*) 'rk_active = ',this%rk_active
@@ -107,31 +68,13 @@
          call display(this%beta,un)
        end subroutine
 
-       subroutine display_many_RK_PARAMS(this,un)
-         implicit none
-         type(rk_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_RK_PARAMS(this)
+       subroutine print_rk_params(this)
          implicit none
          type(rk_params),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_RK_PARAMS(this)
-         implicit none
-         type(rk_params),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_RK_PARAMS(this,un)
+       subroutine export_rk_params(this,un)
          implicit none
          type(rk_params),intent(in) :: this
          integer,intent(in) :: un
@@ -144,22 +87,11 @@
          call export(this%beta,un)
        end subroutine
 
-       subroutine export_many_RK_PARAMS(this,un)
-         implicit none
-         type(rk_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_RK_PARAMS(this,un)
+       subroutine import_rk_params(this,un)
          implicit none
          type(rk_params),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%n_stages
          read(un,*) this%n
          read(un,*) this%rk_active
@@ -169,19 +101,7 @@
          call import(this%beta,un)
        end subroutine
 
-       subroutine import_many_RK_PARAMS(this,un)
-         implicit none
-         type(rk_params),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_RK_PARAMS(this,dir,name)
+       subroutine export_wrapper_rk_params(this,dir,name)
          implicit none
          type(rk_params),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -191,7 +111,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_RK_PARAMS(this,dir,name)
+       subroutine import_wrapper_rk_params(this,dir,name)
          implicit none
          type(rk_params),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

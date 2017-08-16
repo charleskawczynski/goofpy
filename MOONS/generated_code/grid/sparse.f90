@@ -1,39 +1,22 @@
-       module SPARSE_mod
+       module sparse_mod
        use IO_tools_mod
        use array_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: SPARSE
+       public :: sparse
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_sparse;          end interface
-       interface init;   module procedure init_many_sparse;     end interface
        interface delete; module procedure delete_sparse;        end interface
-       interface delete; module procedure delete_many_sparse;   end interface
        interface display;module procedure display_sparse;       end interface
-       interface display;module procedure display_many_sparse;  end interface
        interface print;  module procedure print_sparse;         end interface
-       interface print;  module procedure print_many_sparse;    end interface
        interface export; module procedure export_sparse;        end interface
-       interface export; module procedure export_many_sparse;   end interface
        interface import; module procedure import_sparse;        end interface
-       interface import; module procedure import_many_sparse;   end interface
        interface export; module procedure export_wrapper_sparse;end interface
        interface import; module procedure import_wrapper_sparse;end interface
 
-       type SPARSE
-         private
+       type sparse
          type(array) :: l
          type(array) :: d
          type(array) :: u
@@ -42,7 +25,7 @@
 
        contains
 
-       subroutine init_SPARSE(this,that)
+       subroutine init_sparse(this,that)
          implicit none
          type(sparse),intent(inout) :: this
          type(sparse),intent(in) :: that
@@ -53,19 +36,7 @@
          this%staggered = that%staggered
        end subroutine
 
-       subroutine init_many_SPARSE(this,that)
-         implicit none
-         type(sparse),dimension(:),intent(inout) :: this
-         type(sparse),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_SPARSE(this)
+       subroutine delete_sparse(this)
          implicit none
          type(sparse),intent(inout) :: this
          call delete(this%l)
@@ -74,52 +45,24 @@
          this%staggered = .false.
        end subroutine
 
-       subroutine delete_many_SPARSE(this)
-         implicit none
-         type(sparse),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_SPARSE(this,un)
+       subroutine display_sparse(this,un)
          implicit none
          type(sparse),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- sparse'
          call display(this%l,un)
          call display(this%d,un)
          call display(this%u,un)
          write(un,*) 'staggered = ',this%staggered
        end subroutine
 
-       subroutine display_many_SPARSE(this,un)
-         implicit none
-         type(sparse),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_SPARSE(this)
+       subroutine print_sparse(this)
          implicit none
          type(sparse),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_SPARSE(this)
-         implicit none
-         type(sparse),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_SPARSE(this,un)
+       subroutine export_sparse(this,un)
          implicit none
          type(sparse),intent(in) :: this
          integer,intent(in) :: un
@@ -129,41 +72,18 @@
          write(un,*) this%staggered
        end subroutine
 
-       subroutine export_many_SPARSE(this,un)
-         implicit none
-         type(sparse),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_SPARSE(this,un)
+       subroutine import_sparse(this,un)
          implicit none
          type(sparse),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%l,un)
          call import(this%d,un)
          call import(this%u,un)
          read(un,*) this%staggered
        end subroutine
 
-       subroutine import_many_SPARSE(this,un)
-         implicit none
-         type(sparse),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_SPARSE(this,dir,name)
+       subroutine export_wrapper_sparse(this,dir,name)
          implicit none
          type(sparse),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -173,7 +93,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_SPARSE(this,dir,name)
+       subroutine import_wrapper_sparse(this,dir,name)
          implicit none
          type(sparse),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

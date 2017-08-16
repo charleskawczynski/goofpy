@@ -28,22 +28,6 @@ def add_modules(g,T,F,priv,real):
 	g.module[m_name].add_prop('g_R1_id','integer',priv)
 	g.module[m_name].add_prop('g_R2_id','integer',priv)
 
-	m_name = 'physical_sub_domain'
-	g.add_module(m_name)
-	g.module[m_name].set_folder_name(__name__.split('.')[1])
-	g.module[m_name].set_used_modules(['IO_tools_mod'])
-	g.module[m_name].add_prop('total','sub_domain',priv)
-	g.module[m_name].add_prop('physical','sub_domain',priv)
-	g.module[m_name].add_prop('defined','logical',priv)
-
-	m_name = 'physical_domain'
-	g.add_module(m_name)
-	g.module[m_name].set_folder_name(__name__.split('.')[1])
-	g.module[m_name].set_used_modules(['IO_tools_mod'])
-	g.module[m_name].add_prop('s','integer',priv)
-	g.module[m_name].add_prop('sd','physical_sub_domain',priv,T,1,3)
-	g.module[m_name].add_prop('defined','logical',priv)
-
 	m_name = 'index_2D'
 	g.add_module(m_name)
 	g.module[m_name].set_folder_name(__name__.split('.')[1])

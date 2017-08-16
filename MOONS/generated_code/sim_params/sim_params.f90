@@ -1,53 +1,39 @@
-       module SIM_PARAMS_mod
+       module sim_params_mod
+       use current_precision_mod
        use IO_tools_mod
-       use export_logicals_mod
-       use dimensionless_params_mod
-       use flow_control_logicals_mod
+       use geometry_props_mod
        use var_set_mod
+       use export_logicals_mod
+       use flow_control_logicals_mod
+       use export_frequency_mod
+       use dimensionless_params_mod
+       use energy_terms_mod
+       use mirror_props_mod
+       use time_marching_params_mod
+       use mesh_params_mod
        use momentum_terms_mod
        use induction_terms_mod
-       use geometry_props_mod
-       use energy_terms_mod
-       use mesh_quality_params_mod
-       use mirror_props_mod
-       use export_frequency_mod
-       use time_marching_params_mod
        use time_statistics_params_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: SIM_PARAMS
+       public :: sim_params
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_sim_params;          end interface
-       interface init;   module procedure init_many_sim_params;     end interface
        interface delete; module procedure delete_sim_params;        end interface
-       interface delete; module procedure delete_many_sim_params;   end interface
        interface display;module procedure display_sim_params;       end interface
-       interface display;module procedure display_many_sim_params;  end interface
        interface print;  module procedure print_sim_params;         end interface
-       interface print;  module procedure print_many_sim_params;    end interface
        interface export; module procedure export_sim_params;        end interface
-       interface export; module procedure export_many_sim_params;   end interface
        interface import; module procedure import_sim_params;        end interface
-       interface import; module procedure import_many_sim_params;   end interface
        interface export; module procedure export_wrapper_sim_params;end interface
        interface import; module procedure import_wrapper_sim_params;end interface
 
-       type SIM_PARAMS
-         private
+       type sim_params
          type(var_set) :: vs
-         type(mesh_quality_params) :: mqp
+         type(mesh_params) :: mp_mom
+         type(mesh_params) :: mp_ind
+         type(mesh_params) :: mp_sigma
          type(dimensionless_params) :: dp
          type(export_logicals) :: el
          type(export_frequency) :: ef
@@ -76,13 +62,15 @@
 
        contains
 
-       subroutine init_SIM_PARAMS(this,that)
+       subroutine init_sim_params(this,that)
          implicit none
          type(sim_params),intent(inout) :: this
          type(sim_params),intent(in) :: that
          call delete(this)
          call init(this%vs,that%vs)
-         call init(this%mqp,that%mqp)
+         call init(this%mp_mom,that%mp_mom)
+         call init(this%mp_ind,that%mp_ind)
+         call init(this%mp_sigma,that%mp_sigma)
          call init(this%dp,that%dp)
          call init(this%el,that%el)
          call init(this%ef,that%ef)
@@ -109,23 +97,13 @@
          this%uniform_gravity_dir = that%uniform_gravity_dir
        end subroutine
 
-       subroutine init_many_SIM_PARAMS(this,that)
-         implicit none
-         type(sim_params),dimension(:),intent(inout) :: this
-         type(sim_params),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_SIM_PARAMS(this)
+       subroutine delete_sim_params(this)
          implicit none
          type(sim_params),intent(inout) :: this
          call delete(this%vs)
-         call delete(this%mqp)
+         call delete(this%mp_mom)
+         call delete(this%mp_ind)
+         call delete(this%mp_sigma)
          call delete(this%dp)
          call delete(this%el)
          call delete(this%ef)
@@ -152,23 +130,15 @@
          this%uniform_gravity_dir = 0
        end subroutine
 
-       subroutine delete_many_SIM_PARAMS(this)
-         implicit none
-         type(sim_params),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_SIM_PARAMS(this,un)
+       subroutine display_sim_params(this,un)
          implicit none
          type(sim_params),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- sim_params'
          call display(this%vs,un)
-         call display(this%mqp,un)
+         call display(this%mp_mom,un)
+         call display(this%mp_ind,un)
+         call display(this%mp_sigma,un)
          call display(this%dp,un)
          call display(this%el,un)
          call display(this%ef,un)
@@ -195,36 +165,20 @@
          write(un,*) 'uniform_gravity_dir   = ',this%uniform_gravity_dir
        end subroutine
 
-       subroutine display_many_SIM_PARAMS(this,un)
-         implicit none
-         type(sim_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_SIM_PARAMS(this)
+       subroutine print_sim_params(this)
          implicit none
          type(sim_params),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_SIM_PARAMS(this)
-         implicit none
-         type(sim_params),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_SIM_PARAMS(this,un)
+       subroutine export_sim_params(this,un)
          implicit none
          type(sim_params),intent(in) :: this
          integer,intent(in) :: un
          call export(this%vs,un)
-         call export(this%mqp,un)
+         call export(this%mp_mom,un)
+         call export(this%mp_ind,un)
+         call export(this%mp_sigma,un)
          call export(this%dp,un)
          call export(this%el,un)
          call export(this%ef,un)
@@ -251,24 +205,15 @@
          write(un,*) this%uniform_gravity_dir
        end subroutine
 
-       subroutine export_many_SIM_PARAMS(this,un)
-         implicit none
-         type(sim_params),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_SIM_PARAMS(this,un)
+       subroutine import_sim_params(this,un)
          implicit none
          type(sim_params),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%vs,un)
-         call import(this%mqp,un)
+         call import(this%mp_mom,un)
+         call import(this%mp_ind,un)
+         call import(this%mp_sigma,un)
          call import(this%dp,un)
          call import(this%el,un)
          call import(this%ef,un)
@@ -295,19 +240,7 @@
          read(un,*) this%uniform_gravity_dir
        end subroutine
 
-       subroutine import_many_SIM_PARAMS(this,un)
-         implicit none
-         type(sim_params),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_SIM_PARAMS(this,dir,name)
+       subroutine export_wrapper_sim_params(this,dir,name)
          implicit none
          type(sim_params),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -317,7 +250,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_SIM_PARAMS(this,dir,name)
+       subroutine import_wrapper_sim_params(this,dir,name)
          implicit none
          type(sim_params),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

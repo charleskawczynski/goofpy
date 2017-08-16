@@ -1,40 +1,24 @@
-       module COORDINATES_mod
+       module coordinates_mod
+       use current_precision_mod
        use IO_tools_mod
        use array_mod
        use sparse_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: COORDINATES
+       public :: coordinates
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_coordinates;          end interface
-       interface init;   module procedure init_many_coordinates;     end interface
        interface delete; module procedure delete_coordinates;        end interface
-       interface delete; module procedure delete_many_coordinates;   end interface
        interface display;module procedure display_coordinates;       end interface
-       interface display;module procedure display_many_coordinates;  end interface
        interface print;  module procedure print_coordinates;         end interface
-       interface print;  module procedure print_many_coordinates;    end interface
        interface export; module procedure export_coordinates;        end interface
-       interface export; module procedure export_many_coordinates;   end interface
        interface import; module procedure import_coordinates;        end interface
-       interface import; module procedure import_many_coordinates;   end interface
        interface export; module procedure export_wrapper_coordinates;end interface
        interface import; module procedure import_wrapper_coordinates;end interface
 
-       type COORDINATES
-         private
+       type coordinates
          real(cp) :: hmin = 0.0_cp
          real(cp) :: hmax = 0.0_cp
          real(cp) :: amin = 0.0_cp
@@ -67,10 +51,16 @@
 
        contains
 
-       subroutine init_COORDINATES(this,that)
+       subroutine init_coordinates(this,that)
          implicit none
          type(coordinates),intent(inout) :: this
          type(coordinates),intent(in) :: that
+         integer :: i_colcc
+         integer :: i_coln
+         integer :: i_colcc_centered
+         integer :: s_colcc
+         integer :: s_coln
+         integer :: s_colcc_centered
          call delete(this)
          this%hmin = that%hmin
          this%hmax = that%hmax
@@ -93,30 +83,33 @@
          call init(this%stagcc2n,that%stagcc2n)
          call init(this%stagn2cc,that%stagn2cc)
          call init(this%theta,that%theta)
-         call init(this%colcc,that%colcc)
-         call init(this%coln,that%coln)
-         call init(this%colcc_centered,that%colcc_centered)
+         s_colcc = size(that%colcc)
+         do i_colcc=1,s_colcc
+           call init(this%colcc(i_colcc),that%colcc(i_colcc))
+         enddo
+         s_coln = size(that%coln)
+         do i_coln=1,s_coln
+           call init(this%coln(i_coln),that%coln(i_coln))
+         enddo
+         s_colcc_centered = size(that%colcc_centered)
+         do i_colcc_centered=1,s_colcc_centered
+           call init(this%colcc_centered(i_colcc_centered),that%colcc_centered(i_colcc_centered))
+         enddo
          call init(this%hn,that%hn)
          call init(this%hc,that%hc)
          call init(this%dhn,that%dhn)
          call init(this%dhc,that%dhc)
        end subroutine
 
-       subroutine init_many_COORDINATES(this,that)
-         implicit none
-         type(coordinates),dimension(:),intent(inout) :: this
-         type(coordinates),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_COORDINATES(this)
+       subroutine delete_coordinates(this)
          implicit none
          type(coordinates),intent(inout) :: this
+         integer :: i_colcc
+         integer :: i_coln
+         integer :: i_colcc_centered
+         integer :: s_colcc
+         integer :: s_coln
+         integer :: s_colcc_centered
          this%hmin = 0.0_cp
          this%hmax = 0.0_cp
          this%amin = 0.0_cp
@@ -138,30 +131,35 @@
          call delete(this%stagcc2n)
          call delete(this%stagn2cc)
          call delete(this%theta)
-         call delete(this%colcc)
-         call delete(this%coln)
-         call delete(this%colcc_centered)
+         s_colcc = size(this%colcc)
+         do i_colcc=1,s_colcc
+           call delete(this%colcc(i_colcc))
+         enddo
+         s_coln = size(this%coln)
+         do i_coln=1,s_coln
+           call delete(this%coln(i_coln))
+         enddo
+         s_colcc_centered = size(this%colcc_centered)
+         do i_colcc_centered=1,s_colcc_centered
+           call delete(this%colcc_centered(i_colcc_centered))
+         enddo
          call delete(this%hn)
          call delete(this%hc)
          call delete(this%dhn)
          call delete(this%dhc)
        end subroutine
 
-       subroutine delete_many_COORDINATES(this)
-         implicit none
-         type(coordinates),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_COORDINATES(this,un)
+       subroutine display_coordinates(this,un)
          implicit none
          type(coordinates),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- coordinates'
+         integer :: i_colcc
+         integer :: i_coln
+         integer :: i_colcc_centered
+         integer :: s_colcc
+         integer :: s_coln
+         integer :: s_colcc_centered
          write(un,*) 'hmin              = ',this%hmin
          write(un,*) 'hmax              = ',this%hmax
          write(un,*) 'amin              = ',this%amin
@@ -183,43 +181,40 @@
          call display(this%stagcc2n,un)
          call display(this%stagn2cc,un)
          call display(this%theta,un)
-         call display(this%colcc,un)
-         call display(this%coln,un)
-         call display(this%colcc_centered,un)
+         s_colcc = size(this%colcc)
+         do i_colcc=1,s_colcc
+           call display(this%colcc(i_colcc),un)
+         enddo
+         s_coln = size(this%coln)
+         do i_coln=1,s_coln
+           call display(this%coln(i_coln),un)
+         enddo
+         s_colcc_centered = size(this%colcc_centered)
+         do i_colcc_centered=1,s_colcc_centered
+           call display(this%colcc_centered(i_colcc_centered),un)
+         enddo
          call display(this%hn,un)
          call display(this%hc,un)
          call display(this%dhn,un)
          call display(this%dhc,un)
        end subroutine
 
-       subroutine display_many_COORDINATES(this,un)
-         implicit none
-         type(coordinates),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_COORDINATES(this)
+       subroutine print_coordinates(this)
          implicit none
          type(coordinates),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_COORDINATES(this)
-         implicit none
-         type(coordinates),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_COORDINATES(this,un)
+       subroutine export_coordinates(this,un)
          implicit none
          type(coordinates),intent(in) :: this
          integer,intent(in) :: un
+         integer :: i_colcc
+         integer :: i_coln
+         integer :: i_colcc_centered
+         integer :: s_colcc
+         integer :: s_coln
+         integer :: s_colcc_centered
          write(un,*) this%hmin
          write(un,*) this%hmax
          write(un,*) this%amin
@@ -241,31 +236,38 @@
          call export(this%stagcc2n,un)
          call export(this%stagn2cc,un)
          call export(this%theta,un)
-         call export(this%colcc,un)
-         call export(this%coln,un)
-         call export(this%colcc_centered,un)
+         s_colcc = size(this%colcc)
+         write(un,*) s_colcc
+         do i_colcc=1,s_colcc
+           call export(this%colcc(i_colcc),un)
+         enddo
+         s_coln = size(this%coln)
+         write(un,*) s_coln
+         do i_coln=1,s_coln
+           call export(this%coln(i_coln),un)
+         enddo
+         s_colcc_centered = size(this%colcc_centered)
+         write(un,*) s_colcc_centered
+         do i_colcc_centered=1,s_colcc_centered
+           call export(this%colcc_centered(i_colcc_centered),un)
+         enddo
          call export(this%hn,un)
          call export(this%hc,un)
          call export(this%dhn,un)
          call export(this%dhc,un)
        end subroutine
 
-       subroutine export_many_COORDINATES(this,un)
-         implicit none
-         type(coordinates),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_COORDINATES(this,un)
+       subroutine import_coordinates(this,un)
          implicit none
          type(coordinates),intent(inout) :: this
          integer,intent(in) :: un
+         integer :: i_colcc
+         integer :: i_coln
+         integer :: i_colcc_centered
+         integer :: s_colcc
+         integer :: s_coln
+         integer :: s_colcc_centered
+         call delete(this)
          read(un,*) this%hmin
          read(un,*) this%hmax
          read(un,*) this%amin
@@ -287,28 +289,25 @@
          call import(this%stagcc2n,un)
          call import(this%stagn2cc,un)
          call import(this%theta,un)
-         call import(this%colcc,un)
-         call import(this%coln,un)
-         call import(this%colcc_centered,un)
+         read(un,*) s_colcc
+         do i_colcc=1,s_colcc
+           call import(this%colcc(i_colcc),un)
+         enddo
+         read(un,*) s_coln
+         do i_coln=1,s_coln
+           call import(this%coln(i_coln),un)
+         enddo
+         read(un,*) s_colcc_centered
+         do i_colcc_centered=1,s_colcc_centered
+           call import(this%colcc_centered(i_colcc_centered),un)
+         enddo
          call import(this%hn,un)
          call import(this%hc,un)
          call import(this%dhn,un)
          call import(this%dhc,un)
        end subroutine
 
-       subroutine import_many_COORDINATES(this,un)
-         implicit none
-         type(coordinates),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_COORDINATES(this,dir,name)
+       subroutine export_wrapper_coordinates(this,dir,name)
          implicit none
          type(coordinates),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -318,7 +317,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_COORDINATES(this,dir,name)
+       subroutine import_wrapper_coordinates(this,dir,name)
          implicit none
          type(coordinates),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

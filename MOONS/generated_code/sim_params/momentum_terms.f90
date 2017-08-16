@@ -1,39 +1,22 @@
-       module MOMENTUM_TERMS_mod
+       module momentum_terms_mod
        use IO_tools_mod
        use equation_term_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: MOMENTUM_TERMS
+       public :: momentum_terms
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_momentum_terms;          end interface
-       interface init;   module procedure init_many_momentum_terms;     end interface
        interface delete; module procedure delete_momentum_terms;        end interface
-       interface delete; module procedure delete_many_momentum_terms;   end interface
        interface display;module procedure display_momentum_terms;       end interface
-       interface display;module procedure display_many_momentum_terms;  end interface
        interface print;  module procedure print_momentum_terms;         end interface
-       interface print;  module procedure print_many_momentum_terms;    end interface
        interface export; module procedure export_momentum_terms;        end interface
-       interface export; module procedure export_many_momentum_terms;   end interface
        interface import; module procedure import_momentum_terms;        end interface
-       interface import; module procedure import_many_momentum_terms;   end interface
        interface export; module procedure export_wrapper_momentum_terms;end interface
        interface import; module procedure import_wrapper_momentum_terms;end interface
 
-       type MOMENTUM_TERMS
-         private
+       type momentum_terms
          type(equation_term) :: pressure_grad
          type(equation_term) :: advection_divergence
          type(equation_term) :: advection_convection
@@ -48,7 +31,7 @@
 
        contains
 
-       subroutine init_MOMENTUM_TERMS(this,that)
+       subroutine init_momentum_terms(this,that)
          implicit none
          type(momentum_terms),intent(inout) :: this
          type(momentum_terms),intent(in) :: that
@@ -65,19 +48,7 @@
          call init(this%gravity,that%gravity)
        end subroutine
 
-       subroutine init_many_MOMENTUM_TERMS(this,that)
-         implicit none
-         type(momentum_terms),dimension(:),intent(inout) :: this
-         type(momentum_terms),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_MOMENTUM_TERMS(this)
+       subroutine delete_momentum_terms(this)
          implicit none
          type(momentum_terms),intent(inout) :: this
          call delete(this%pressure_grad)
@@ -92,21 +63,11 @@
          call delete(this%gravity)
        end subroutine
 
-       subroutine delete_many_MOMENTUM_TERMS(this)
-         implicit none
-         type(momentum_terms),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_MOMENTUM_TERMS(this,un)
+       subroutine display_momentum_terms(this,un)
          implicit none
          type(momentum_terms),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- momentum_terms'
          call display(this%pressure_grad,un)
          call display(this%advection_divergence,un)
          call display(this%advection_convection,un)
@@ -119,31 +80,13 @@
          call display(this%gravity,un)
        end subroutine
 
-       subroutine display_many_MOMENTUM_TERMS(this,un)
-         implicit none
-         type(momentum_terms),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_MOMENTUM_TERMS(this)
+       subroutine print_momentum_terms(this)
          implicit none
          type(momentum_terms),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_MOMENTUM_TERMS(this)
-         implicit none
-         type(momentum_terms),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_MOMENTUM_TERMS(this,un)
+       subroutine export_momentum_terms(this,un)
          implicit none
          type(momentum_terms),intent(in) :: this
          integer,intent(in) :: un
@@ -159,22 +102,11 @@
          call export(this%gravity,un)
        end subroutine
 
-       subroutine export_many_MOMENTUM_TERMS(this,un)
-         implicit none
-         type(momentum_terms),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_MOMENTUM_TERMS(this,un)
+       subroutine import_momentum_terms(this,un)
          implicit none
          type(momentum_terms),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%pressure_grad,un)
          call import(this%advection_divergence,un)
          call import(this%advection_convection,un)
@@ -187,19 +119,7 @@
          call import(this%gravity,un)
        end subroutine
 
-       subroutine import_many_MOMENTUM_TERMS(this,un)
-         implicit none
-         type(momentum_terms),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_MOMENTUM_TERMS(this,dir,name)
+       subroutine export_wrapper_momentum_terms(this,dir,name)
          implicit none
          type(momentum_terms),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -209,7 +129,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_MOMENTUM_TERMS(this,dir,name)
+       subroutine import_wrapper_momentum_terms(this,dir,name)
          implicit none
          type(momentum_terms),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

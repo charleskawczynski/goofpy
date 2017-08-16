@@ -1,38 +1,22 @@
-       module STATS_PERIOD_mod
+       module stats_period_mod
+       use current_precision_mod
        use IO_tools_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: STATS_PERIOD
+       public :: stats_period
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_stats_period;          end interface
-       interface init;   module procedure init_many_stats_period;     end interface
        interface delete; module procedure delete_stats_period;        end interface
-       interface delete; module procedure delete_many_stats_period;   end interface
        interface display;module procedure display_stats_period;       end interface
-       interface display;module procedure display_many_stats_period;  end interface
        interface print;  module procedure print_stats_period;         end interface
-       interface print;  module procedure print_many_stats_period;    end interface
        interface export; module procedure export_stats_period;        end interface
-       interface export; module procedure export_many_stats_period;   end interface
        interface import; module procedure import_stats_period;        end interface
-       interface import; module procedure import_many_stats_period;   end interface
        interface export; module procedure export_wrapper_stats_period;end interface
        interface import; module procedure import_wrapper_stats_period;end interface
 
-       type STATS_PERIOD
-         private
+       type stats_period
          real(cp) :: t_start = 0.0_cp
          real(cp) :: t_start_actual = 0.0_cp
          real(cp) :: t_stop = 0.0_cp
@@ -47,7 +31,7 @@
 
        contains
 
-       subroutine init_STATS_PERIOD(this,that)
+       subroutine init_stats_period(this,that)
          implicit none
          type(stats_period),intent(inout) :: this
          type(stats_period),intent(in) :: that
@@ -64,19 +48,7 @@
          this%exported_stats = that%exported_stats
        end subroutine
 
-       subroutine init_many_STATS_PERIOD(this,that)
-         implicit none
-         type(stats_period),dimension(:),intent(inout) :: this
-         type(stats_period),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_STATS_PERIOD(this)
+       subroutine delete_stats_period(this)
          implicit none
          type(stats_period),intent(inout) :: this
          this%t_start = 0.0_cp
@@ -91,21 +63,11 @@
          this%exported_stats = .false.
        end subroutine
 
-       subroutine delete_many_STATS_PERIOD(this)
-         implicit none
-         type(stats_period),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_STATS_PERIOD(this,un)
+       subroutine display_stats_period(this,un)
          implicit none
          type(stats_period),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- stats_period'
          write(un,*) 't_start                = ',this%t_start
          write(un,*) 't_start_actual         = ',this%t_start_actual
          write(un,*) 't_stop                 = ',this%t_stop
@@ -118,31 +80,13 @@
          write(un,*) 'exported_stats         = ',this%exported_stats
        end subroutine
 
-       subroutine display_many_STATS_PERIOD(this,un)
-         implicit none
-         type(stats_period),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_STATS_PERIOD(this)
+       subroutine print_stats_period(this)
          implicit none
          type(stats_period),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_STATS_PERIOD(this)
-         implicit none
-         type(stats_period),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_STATS_PERIOD(this,un)
+       subroutine export_stats_period(this,un)
          implicit none
          type(stats_period),intent(in) :: this
          integer,intent(in) :: un
@@ -158,22 +102,11 @@
          write(un,*) this%exported_stats
        end subroutine
 
-       subroutine export_many_STATS_PERIOD(this,un)
-         implicit none
-         type(stats_period),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_STATS_PERIOD(this,un)
+       subroutine import_stats_period(this,un)
          implicit none
          type(stats_period),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%t_start
          read(un,*) this%t_start_actual
          read(un,*) this%t_stop
@@ -186,19 +119,7 @@
          read(un,*) this%exported_stats
        end subroutine
 
-       subroutine import_many_STATS_PERIOD(this,un)
-         implicit none
-         type(stats_period),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_STATS_PERIOD(this,dir,name)
+       subroutine export_wrapper_stats_period(this,dir,name)
          implicit none
          type(stats_period),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -208,7 +129,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_STATS_PERIOD(this,dir,name)
+       subroutine import_wrapper_stats_period(this,dir,name)
          implicit none
          type(stats_period),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

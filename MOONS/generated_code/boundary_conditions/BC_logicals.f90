@@ -1,38 +1,21 @@
-       module BC_LOGICALS_mod
+       module bc_logicals_mod
        use IO_tools_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: BC_LOGICALS
+       public :: bc_logicals
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_bc_logicals;          end interface
-       interface init;   module procedure init_many_bc_logicals;     end interface
        interface delete; module procedure delete_bc_logicals;        end interface
-       interface delete; module procedure delete_many_bc_logicals;   end interface
        interface display;module procedure display_bc_logicals;       end interface
-       interface display;module procedure display_many_bc_logicals;  end interface
        interface print;  module procedure print_bc_logicals;         end interface
-       interface print;  module procedure print_many_bc_logicals;    end interface
        interface export; module procedure export_bc_logicals;        end interface
-       interface export; module procedure export_many_bc_logicals;   end interface
        interface import; module procedure import_bc_logicals;        end interface
-       interface import; module procedure import_many_bc_logicals;   end interface
        interface export; module procedure export_wrapper_bc_logicals;end interface
        interface import; module procedure import_wrapper_bc_logicals;end interface
 
-       type BC_LOGICALS
-         private
+       type bc_logicals
          logical :: defined = .false.
          logical :: gfs_defined = .false.
          logical :: bct_defined = .false.
@@ -52,7 +35,7 @@
 
        contains
 
-       subroutine init_BC_LOGICALS(this,that)
+       subroutine init_bc_logicals(this,that)
          implicit none
          type(bc_logicals),intent(inout) :: this
          type(bc_logicals),intent(in) :: that
@@ -74,19 +57,7 @@
          this%any_prescribed = that%any_prescribed
        end subroutine
 
-       subroutine init_many_BC_LOGICALS(this,that)
-         implicit none
-         type(bc_logicals),dimension(:),intent(inout) :: this
-         type(bc_logicals),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_BC_LOGICALS(this)
+       subroutine delete_bc_logicals(this)
          implicit none
          type(bc_logicals),intent(inout) :: this
          this%defined = .false.
@@ -106,21 +77,11 @@
          this%any_prescribed = .false.
        end subroutine
 
-       subroutine delete_many_BC_LOGICALS(this)
-         implicit none
-         type(bc_logicals),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_BC_LOGICALS(this,un)
+       subroutine display_bc_logicals(this,un)
          implicit none
          type(bc_logicals),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- bc_logicals'
          write(un,*) 'defined           = ',this%defined
          write(un,*) 'gfs_defined       = ',this%gfs_defined
          write(un,*) 'bct_defined       = ',this%bct_defined
@@ -138,31 +99,13 @@
          write(un,*) 'any_prescribed    = ',this%any_prescribed
        end subroutine
 
-       subroutine display_many_BC_LOGICALS(this,un)
-         implicit none
-         type(bc_logicals),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_BC_LOGICALS(this)
+       subroutine print_bc_logicals(this)
          implicit none
          type(bc_logicals),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_BC_LOGICALS(this)
-         implicit none
-         type(bc_logicals),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_BC_LOGICALS(this,un)
+       subroutine export_bc_logicals(this,un)
          implicit none
          type(bc_logicals),intent(in) :: this
          integer,intent(in) :: un
@@ -183,22 +126,11 @@
          write(un,*) this%any_prescribed
        end subroutine
 
-       subroutine export_many_BC_LOGICALS(this,un)
-         implicit none
-         type(bc_logicals),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_BC_LOGICALS(this,un)
+       subroutine import_bc_logicals(this,un)
          implicit none
          type(bc_logicals),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%defined
          read(un,*) this%gfs_defined
          read(un,*) this%bct_defined
@@ -216,19 +148,7 @@
          read(un,*) this%any_prescribed
        end subroutine
 
-       subroutine import_many_BC_LOGICALS(this,un)
-         implicit none
-         type(bc_logicals),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_BC_LOGICALS(this,dir,name)
+       subroutine export_wrapper_bc_logicals(this,dir,name)
          implicit none
          type(bc_logicals),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -238,7 +158,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_BC_LOGICALS(this,dir,name)
+       subroutine import_wrapper_bc_logicals(this,dir,name)
          implicit none
          type(bc_logicals),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

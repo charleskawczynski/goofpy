@@ -1,38 +1,21 @@
-       module EXPORT_LOGICALS_mod
+       module export_logicals_mod
        use IO_tools_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: EXPORT_LOGICALS
+       public :: export_logicals
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_export_logicals;          end interface
-       interface init;   module procedure init_many_export_logicals;     end interface
        interface delete; module procedure delete_export_logicals;        end interface
-       interface delete; module procedure delete_many_export_logicals;   end interface
        interface display;module procedure display_export_logicals;       end interface
-       interface display;module procedure display_many_export_logicals;  end interface
        interface print;  module procedure print_export_logicals;         end interface
-       interface print;  module procedure print_many_export_logicals;    end interface
        interface export; module procedure export_export_logicals;        end interface
-       interface export; module procedure export_many_export_logicals;   end interface
        interface import; module procedure import_export_logicals;        end interface
-       interface import; module procedure import_many_export_logicals;   end interface
        interface export; module procedure export_wrapper_export_logicals;end interface
        interface import; module procedure import_wrapper_export_logicals;end interface
 
-       type EXPORT_LOGICALS
-         private
+       type export_logicals
          logical :: export_analytic = .false.
          logical :: export_meshes = .false.
          logical :: export_vort_sf = .false.
@@ -48,7 +31,7 @@
 
        contains
 
-       subroutine init_EXPORT_LOGICALS(this,that)
+       subroutine init_export_logicals(this,that)
          implicit none
          type(export_logicals),intent(inout) :: this
          type(export_logicals),intent(in) :: that
@@ -66,19 +49,7 @@
          this%defined = that%defined
        end subroutine
 
-       subroutine init_many_EXPORT_LOGICALS(this,that)
-         implicit none
-         type(export_logicals),dimension(:),intent(inout) :: this
-         type(export_logicals),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_EXPORT_LOGICALS(this)
+       subroutine delete_export_logicals(this)
          implicit none
          type(export_logicals),intent(inout) :: this
          this%export_analytic = .false.
@@ -94,21 +65,11 @@
          this%defined = .false.
        end subroutine
 
-       subroutine delete_many_EXPORT_LOGICALS(this)
-         implicit none
-         type(export_logicals),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_EXPORT_LOGICALS(this,un)
+       subroutine display_export_logicals(this,un)
          implicit none
          type(export_logicals),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- export_logicals'
          write(un,*) 'export_analytic    = ',this%export_analytic
          write(un,*) 'export_meshes      = ',this%export_meshes
          write(un,*) 'export_vort_sf     = ',this%export_vort_sf
@@ -122,31 +83,13 @@
          write(un,*) 'defined            = ',this%defined
        end subroutine
 
-       subroutine display_many_EXPORT_LOGICALS(this,un)
-         implicit none
-         type(export_logicals),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_EXPORT_LOGICALS(this)
+       subroutine print_export_logicals(this)
          implicit none
          type(export_logicals),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_EXPORT_LOGICALS(this)
-         implicit none
-         type(export_logicals),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_EXPORT_LOGICALS(this,un)
+       subroutine export_export_logicals(this,un)
          implicit none
          type(export_logicals),intent(in) :: this
          integer,intent(in) :: un
@@ -163,22 +106,11 @@
          write(un,*) this%defined
        end subroutine
 
-       subroutine export_many_EXPORT_LOGICALS(this,un)
-         implicit none
-         type(export_logicals),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_EXPORT_LOGICALS(this,un)
+       subroutine import_export_logicals(this,un)
          implicit none
          type(export_logicals),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%export_analytic
          read(un,*) this%export_meshes
          read(un,*) this%export_vort_sf
@@ -192,19 +124,7 @@
          read(un,*) this%defined
        end subroutine
 
-       subroutine import_many_EXPORT_LOGICALS(this,un)
-         implicit none
-         type(export_logicals),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_EXPORT_LOGICALS(this,dir,name)
+       subroutine export_wrapper_export_logicals(this,dir,name)
          implicit none
          type(export_logicals),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -214,7 +134,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_EXPORT_LOGICALS(this,dir,name)
+       subroutine import_wrapper_export_logicals(this,dir,name)
          implicit none
          type(export_logicals),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

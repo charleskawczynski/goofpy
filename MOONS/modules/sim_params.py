@@ -31,15 +31,6 @@ def add_modules(g,T,F,priv,real):
 	g.module[m_name].add_prop('O1_stats','stats_period',priv)
 	g.module[m_name].add_prop('O2_stats','stats_period',priv)
 
-	m_name = 'mesh_quality_params'
-	g.add_module(m_name)
-	g.module[m_name].set_folder_name(__name__.split('.')[1])
-	g.module[m_name].set_used_modules(['IO_tools_mod'])
-	g.module[m_name].add_prop('max_mesh_stretch_ratio',real,priv)
-	g.module[m_name].add_prop('N_max_points_add','integer',priv)
-	g.module[m_name].add_prop('N_iter','integer',priv)
-	g.module[m_name].add_prop('auto_find_N','logical',priv)
-
 	m_name = 'mirror_props'
 	g.add_module(m_name)
 	g.module[m_name].set_folder_name(__name__.split('.')[1])
@@ -182,13 +173,17 @@ def add_modules(g,T,F,priv,real):
 	g.module[m_name].add_prop('L_eta',real,priv)
 	g.module[m_name].add_prop('U_eta',real,priv)
 	g.module[m_name].add_prop('t_eta',real,priv)
+	g.module[m_name].add_prop('dir','string',priv)
+	g.module[m_name].add_prop('name','string',priv)
 
 	m_name = 'sim_params'
 	g.add_module(m_name)
 	g.module[m_name].set_folder_name(__name__.split('.')[1])
 	g.module[m_name].set_used_modules(['IO_tools_mod'])
 	g.module[m_name].add_prop('VS','var_set',priv)
-	g.module[m_name].add_prop('MQP','mesh_quality_params',priv)
+	g.module[m_name].add_prop('MP_mom','mesh_params',priv)
+	g.module[m_name].add_prop('MP_ind','mesh_params',priv)
+	g.module[m_name].add_prop('MP_sigma','mesh_params',priv)
 	g.module[m_name].add_prop('DP','dimensionless_params',priv)
 	g.module[m_name].add_prop('EL','export_logicals',priv)
 	g.module[m_name].add_prop('EF','export_frequency',priv)

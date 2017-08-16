@@ -123,7 +123,10 @@ def get_file_list_from_module_names(file_list,module_names):
     file_list_sorted = []
     for m in module_names:
         for f in file_list:
-            if m==get_module_name(f)[0]: file_list_sorted.append(f)
+            try:
+                if m==get_module_name(f)[0]: file_list_sorted.append(f)
+            except:
+                print('Error: potential name-mismatch')
     return file_list_sorted
 
 def get_main_program(path,FL):

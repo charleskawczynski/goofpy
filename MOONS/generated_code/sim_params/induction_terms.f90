@@ -1,39 +1,22 @@
-       module INDUCTION_TERMS_mod
+       module induction_terms_mod
        use IO_tools_mod
        use equation_term_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: INDUCTION_TERMS
+       public :: induction_terms
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_induction_terms;          end interface
-       interface init;   module procedure init_many_induction_terms;     end interface
        interface delete; module procedure delete_induction_terms;        end interface
-       interface delete; module procedure delete_many_induction_terms;   end interface
        interface display;module procedure display_induction_terms;       end interface
-       interface display;module procedure display_many_induction_terms;  end interface
        interface print;  module procedure print_induction_terms;         end interface
-       interface print;  module procedure print_many_induction_terms;    end interface
        interface export; module procedure export_induction_terms;        end interface
-       interface export; module procedure export_many_induction_terms;   end interface
        interface import; module procedure import_induction_terms;        end interface
-       interface import; module procedure import_many_induction_terms;   end interface
        interface export; module procedure export_wrapper_induction_terms;end interface
        interface import; module procedure import_wrapper_induction_terms;end interface
 
-       type INDUCTION_TERMS
-         private
+       type induction_terms
          type(equation_term) :: advection
          type(equation_term) :: diffusion
          type(equation_term) :: unsteady_b0
@@ -43,7 +26,7 @@
 
        contains
 
-       subroutine init_INDUCTION_TERMS(this,that)
+       subroutine init_induction_terms(this,that)
          implicit none
          type(induction_terms),intent(inout) :: this
          type(induction_terms),intent(in) :: that
@@ -55,19 +38,7 @@
          call init(this%b_applied,that%b_applied)
        end subroutine
 
-       subroutine init_many_INDUCTION_TERMS(this,that)
-         implicit none
-         type(induction_terms),dimension(:),intent(inout) :: this
-         type(induction_terms),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_INDUCTION_TERMS(this)
+       subroutine delete_induction_terms(this)
          implicit none
          type(induction_terms),intent(inout) :: this
          call delete(this%advection)
@@ -77,21 +48,11 @@
          call delete(this%b_applied)
        end subroutine
 
-       subroutine delete_many_INDUCTION_TERMS(this)
-         implicit none
-         type(induction_terms),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_INDUCTION_TERMS(this,un)
+       subroutine display_induction_terms(this,un)
          implicit none
          type(induction_terms),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- induction_terms'
          call display(this%advection,un)
          call display(this%diffusion,un)
          call display(this%unsteady_b0,un)
@@ -99,31 +60,13 @@
          call display(this%b_applied,un)
        end subroutine
 
-       subroutine display_many_INDUCTION_TERMS(this,un)
-         implicit none
-         type(induction_terms),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_INDUCTION_TERMS(this)
+       subroutine print_induction_terms(this)
          implicit none
          type(induction_terms),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_INDUCTION_TERMS(this)
-         implicit none
-         type(induction_terms),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_INDUCTION_TERMS(this,un)
+       subroutine export_induction_terms(this,un)
          implicit none
          type(induction_terms),intent(in) :: this
          integer,intent(in) :: un
@@ -134,22 +77,11 @@
          call export(this%b_applied,un)
        end subroutine
 
-       subroutine export_many_INDUCTION_TERMS(this,un)
-         implicit none
-         type(induction_terms),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_INDUCTION_TERMS(this,un)
+       subroutine import_induction_terms(this,un)
          implicit none
          type(induction_terms),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%advection,un)
          call import(this%diffusion,un)
          call import(this%unsteady_b0,un)
@@ -157,19 +89,7 @@
          call import(this%b_applied,un)
        end subroutine
 
-       subroutine import_many_INDUCTION_TERMS(this,un)
-         implicit none
-         type(induction_terms),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_INDUCTION_TERMS(this,dir,name)
+       subroutine export_wrapper_induction_terms(this,dir,name)
          implicit none
          type(induction_terms),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -179,7 +99,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_INDUCTION_TERMS(this,dir,name)
+       subroutine import_wrapper_induction_terms(this,dir,name)
          implicit none
          type(induction_terms),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

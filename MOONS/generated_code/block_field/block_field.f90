@@ -1,42 +1,25 @@
-       module BLOCK_FIELD_mod
+       module block_field_mod
        use IO_tools_mod
-       use procedure_array_plane_op_mod
        use boundary_conditions_mod
-       use grid_field_mod
        use data_location_mod
+       use procedure_array_plane_op_mod
+       use grid_field_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: BLOCK_FIELD
+       public :: block_field
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_block_field;          end interface
-       interface init;   module procedure init_many_block_field;     end interface
        interface delete; module procedure delete_block_field;        end interface
-       interface delete; module procedure delete_many_block_field;   end interface
        interface display;module procedure display_block_field;       end interface
-       interface display;module procedure display_many_block_field;  end interface
        interface print;  module procedure print_block_field;         end interface
-       interface print;  module procedure print_many_block_field;    end interface
        interface export; module procedure export_block_field;        end interface
-       interface export; module procedure export_many_block_field;   end interface
        interface import; module procedure import_block_field;        end interface
-       interface import; module procedure import_many_block_field;   end interface
        interface export; module procedure export_wrapper_block_field;end interface
        interface import; module procedure import_wrapper_block_field;end interface
 
-       type BLOCK_FIELD
-         private
+       type block_field
          type(grid_field) :: gf
          type(boundary_conditions) :: bcs
          type(data_location) :: dl
@@ -51,7 +34,7 @@
 
        contains
 
-       subroutine init_BLOCK_FIELD(this,that)
+       subroutine init_block_field(this,that)
          implicit none
          type(block_field),intent(inout) :: this
          type(block_field),intent(in) :: that
@@ -68,19 +51,7 @@
          call init(this%pa_multiply_wall_neumann,that%pa_multiply_wall_neumann)
        end subroutine
 
-       subroutine init_many_BLOCK_FIELD(this,that)
-         implicit none
-         type(block_field),dimension(:),intent(inout) :: this
-         type(block_field),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_BLOCK_FIELD(this)
+       subroutine delete_block_field(this)
          implicit none
          type(block_field),intent(inout) :: this
          call delete(this%gf)
@@ -95,21 +66,11 @@
          call delete(this%pa_multiply_wall_neumann)
        end subroutine
 
-       subroutine delete_many_BLOCK_FIELD(this)
-         implicit none
-         type(block_field),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_BLOCK_FIELD(this,un)
+       subroutine display_block_field(this,un)
          implicit none
          type(block_field),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- block_field'
          call display(this%gf,un)
          call display(this%bcs,un)
          call display(this%dl,un)
@@ -122,31 +83,13 @@
          call display(this%pa_multiply_wall_neumann,un)
        end subroutine
 
-       subroutine display_many_BLOCK_FIELD(this,un)
-         implicit none
-         type(block_field),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_BLOCK_FIELD(this)
+       subroutine print_block_field(this)
          implicit none
          type(block_field),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_BLOCK_FIELD(this)
-         implicit none
-         type(block_field),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_BLOCK_FIELD(this,un)
+       subroutine export_block_field(this,un)
          implicit none
          type(block_field),intent(in) :: this
          integer,intent(in) :: un
@@ -162,22 +105,11 @@
          call export(this%pa_multiply_wall_neumann,un)
        end subroutine
 
-       subroutine export_many_BLOCK_FIELD(this,un)
-         implicit none
-         type(block_field),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_BLOCK_FIELD(this,un)
+       subroutine import_block_field(this,un)
          implicit none
          type(block_field),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          call import(this%gf,un)
          call import(this%bcs,un)
          call import(this%dl,un)
@@ -190,19 +122,7 @@
          call import(this%pa_multiply_wall_neumann,un)
        end subroutine
 
-       subroutine import_many_BLOCK_FIELD(this,un)
-         implicit none
-         type(block_field),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_BLOCK_FIELD(this,dir,name)
+       subroutine export_wrapper_block_field(this,dir,name)
          implicit none
          type(block_field),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -212,7 +132,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_BLOCK_FIELD(this,dir,name)
+       subroutine import_wrapper_block_field(this,dir,name)
          implicit none
          type(block_field),intent(inout) :: this
          character(len=*),intent(in) :: dir,name

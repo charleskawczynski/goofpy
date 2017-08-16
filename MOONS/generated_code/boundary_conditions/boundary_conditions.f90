@@ -1,43 +1,26 @@
-       module BOUNDARY_CONDITIONS_mod
+       module boundary_conditions_mod
        use IO_tools_mod
+       use data_location_mod
+       use BC_logicals_mod
+       use procedure_array_mod
        use face_SD_mod
        use boundary_mod
-       use procedure_array_mod
-       use BC_logicals_mod
-       use data_location_mod
        implicit none
 
-       integer,parameter :: li = selected_int_kind(16)
-#ifdef _QUAD_PRECISION_
-       integer,parameter :: cp = selected_real_kind(32) ! Quad precision
-#else
-#ifdef _SINGLE_PRECISION_
-       integer,parameter :: cp = selected_real_kind(8)  ! Single precision
-#else
-       integer,parameter :: cp = selected_real_kind(14) ! Double precision (default)
-#endif
-#endif
        private
-       public :: BOUNDARY_CONDITIONS
+       public :: boundary_conditions
        public :: init,delete,display,print,export,import
 
        interface init;   module procedure init_boundary_conditions;          end interface
-       interface init;   module procedure init_many_boundary_conditions;     end interface
        interface delete; module procedure delete_boundary_conditions;        end interface
-       interface delete; module procedure delete_many_boundary_conditions;   end interface
        interface display;module procedure display_boundary_conditions;       end interface
-       interface display;module procedure display_many_boundary_conditions;  end interface
        interface print;  module procedure print_boundary_conditions;         end interface
-       interface print;  module procedure print_many_boundary_conditions;    end interface
        interface export; module procedure export_boundary_conditions;        end interface
-       interface export; module procedure export_many_boundary_conditions;   end interface
        interface import; module procedure import_boundary_conditions;        end interface
-       interface import; module procedure import_many_boundary_conditions;   end interface
        interface export; module procedure export_wrapper_boundary_conditions;end interface
        interface import; module procedure import_wrapper_boundary_conditions;end interface
 
-       type BOUNDARY_CONDITIONS
-         private
+       type boundary_conditions
          integer,dimension(6) :: apply_bc_order = 0
          type(bc_logicals) :: bcl
          type(data_location) :: dl
@@ -49,7 +32,7 @@
 
        contains
 
-       subroutine init_BOUNDARY_CONDITIONS(this,that)
+       subroutine init_boundary_conditions(this,that)
          implicit none
          type(boundary_conditions),intent(inout) :: this
          type(boundary_conditions),intent(in) :: that
@@ -63,19 +46,7 @@
          call init(this%f_bcs,that%f_bcs)
        end subroutine
 
-       subroutine init_many_BOUNDARY_CONDITIONS(this,that)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(inout) :: this
-         type(boundary_conditions),dimension(:),intent(in) :: that
-         integer :: i_iter
-         if (size(that).gt.0) then
-           do i_iter=1,size(this)
-             call init(this(i_iter),that(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine delete_BOUNDARY_CONDITIONS(this)
+       subroutine delete_boundary_conditions(this)
          implicit none
          type(boundary_conditions),intent(inout) :: this
          this%apply_bc_order = 0
@@ -87,21 +58,11 @@
          call delete(this%f_bcs)
        end subroutine
 
-       subroutine delete_many_BOUNDARY_CONDITIONS(this)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(inout) :: this
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call delete(this(i_iter))
-           enddo
-         endif
-       end subroutine
-
-       subroutine display_BOUNDARY_CONDITIONS(this,un)
+       subroutine display_boundary_conditions(this,un)
          implicit none
          type(boundary_conditions),intent(in) :: this
          integer,intent(in) :: un
+         write(un,*) ' -------------------- boundary_conditions'
          write(un,*) 'apply_bc_order       = ',this%apply_bc_order
          call display(this%bcl,un)
          call display(this%dl,un)
@@ -111,31 +72,13 @@
          call display(this%f_bcs,un)
        end subroutine
 
-       subroutine display_many_BOUNDARY_CONDITIONS(this,un)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call display(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine print_BOUNDARY_CONDITIONS(this)
+       subroutine print_boundary_conditions(this)
          implicit none
          type(boundary_conditions),intent(in) :: this
          call display(this,6)
        end subroutine
 
-       subroutine print_many_BOUNDARY_CONDITIONS(this)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(in),allocatable :: this
-         call display(this,6)
-       end subroutine
-
-       subroutine export_BOUNDARY_CONDITIONS(this,un)
+       subroutine export_boundary_conditions(this,un)
          implicit none
          type(boundary_conditions),intent(in) :: this
          integer,intent(in) :: un
@@ -148,22 +91,11 @@
          call export(this%f_bcs,un)
        end subroutine
 
-       subroutine export_many_BOUNDARY_CONDITIONS(this,un)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(in) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call export(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine import_BOUNDARY_CONDITIONS(this,un)
+       subroutine import_boundary_conditions(this,un)
          implicit none
          type(boundary_conditions),intent(inout) :: this
          integer,intent(in) :: un
+         call delete(this)
          read(un,*) this%apply_bc_order
          call import(this%bcl,un)
          call import(this%dl,un)
@@ -173,19 +105,7 @@
          call import(this%f_bcs,un)
        end subroutine
 
-       subroutine import_many_BOUNDARY_CONDITIONS(this,un)
-         implicit none
-         type(boundary_conditions),dimension(:),intent(inout) :: this
-         integer,intent(in) :: un
-         integer :: i_iter
-         if (size(this).gt.0) then
-           do i_iter=1,size(this)
-             call import(this(i_iter),un)
-           enddo
-         endif
-       end subroutine
-
-       subroutine export_wrapper_BOUNDARY_CONDITIONS(this,dir,name)
+       subroutine export_wrapper_boundary_conditions(this,dir,name)
          implicit none
          type(boundary_conditions),intent(in) :: this
          character(len=*),intent(in) :: dir,name
@@ -195,7 +115,7 @@
          close(un)
        end subroutine
 
-       subroutine import_wrapper_BOUNDARY_CONDITIONS(this,dir,name)
+       subroutine import_wrapper_boundary_conditions(this,dir,name)
          implicit none
          type(boundary_conditions),intent(inout) :: this
          character(len=*),intent(in) :: dir,name
